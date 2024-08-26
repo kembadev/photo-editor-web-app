@@ -1,0 +1,133 @@
+button {
+  display: grid;
+  align-items: center;
+  border: 1px solid var(--borderColor);
+  outline: none;
+  border-radius: var(--borderRadius);
+  background-color: var(--btnBackground);
+  color: #dcdde1;
+  padding: 5px;
+  cursor: pointer;
+
+  &>svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.control-panel {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-inline: auto auto;
+}
+
+.control-panel__image-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 4px;
+
+  &>* {
+    max-height: 35px;
+  }
+}
+
+.control-panel__image-actions .restore-actions_container {
+  width: 120px;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  justify-content: space-evenly;
+
+  button:first-child {
+    border-radius: var(--borderRadius) 0 0 var(--borderRadius);
+  }
+
+  button {
+    height: 2.2em;
+    border: none;
+  }
+
+  button:last-child {
+    border-radius: 0 var(--borderRadius) var(--borderRadius) 0;
+  }
+
+  button+button {
+    border-left: 1px solid color-mix(in srgb, var(--textMain) 50%, transparent);
+  }
+
+  button>svg {
+    height: 100%;
+  }
+}
+
+
+.control-panel__image-actions .tool-features_container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12px;
+
+  &>* {
+    height: 35px;
+  }
+}
+
+
+.control-panel__image-actions .tool-features_container,
+.control-panel__tools-selector {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--borderColor) transparent;
+}
+
+.control-panel__tools-selector {
+  border-top: 1px solid var(--borderColor);
+  padding-top: 10px;
+  padding-bottom: 5px;
+
+  ul {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+  }
+}
+
+
+.control-panel__save-discard_cotainer {
+  height: 40px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+
+  button {
+    height: inherit;
+    border-radius: 0;
+    font-size: 1.15em;
+  }
+
+  button:first-child {
+    border-radius: var(--borderRadius) 0 0 var(--borderRadius);
+  }
+
+  button:last-child {
+    border-radius: 0 var(--borderRadius) var(--borderRadius) 0;
+  }
+}
+
+.control-panel__save-discard_cotainer .save-btn {
+  background-color: var(--highlightColor);
+  color: var(--contrastColor);
+  border: none;
+}
+
+.control-panel__save-discard_cotainer .discard-btn {
+  background-color: color-mix(in srgb, var(--contrastColor) 5%, transparent);
+  border: none;
+  box-shadow: 1px 1px 1px rgb(186, 195, 197);
+  position: relative;
+  top: -1px;
+}

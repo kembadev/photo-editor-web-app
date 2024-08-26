@@ -1,0 +1,11 @@
+.editor {
+  box-sizing: border-box;
+  width: 100vw;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 25px;
+  overflow: hidden;
+  position: relative;
+}

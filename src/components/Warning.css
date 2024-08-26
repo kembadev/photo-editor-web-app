@@ -1,0 +1,14 @@
+.warning {
+  width: 100%;
+  background-color: #b53471;
+  backdrop-filter: blur(10px);
+  opacity: 0.85;
+  text-align: center;
+  line-height: 1.5rem;
+  font-size: small;
+  font-weight: bold;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}

@@ -1,0 +1,153 @@
+.download-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #f7f7f7;
+  font-size: 1rem;
+
+  &>.config-controls {
+    flex: 1;
+  }
+}
+
+.download-modal__form .config-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  &>* {
+    padding-bottom: 10px;
+    border-bottom: var(--border);
+
+  }
+
+  input {
+    border: none;
+    outline: none;
+    border-radius: var(--borderRadius);
+  }
+}
+
+.config-controls__scale {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  article {
+    display: flex;
+    flex-direction: row;
+    gap: 0.9em;
+    font-size: 0.9em;
+
+    input {
+      flex: 1
+    }
+
+    span {
+      width: 70px;
+      text-align: center;
+      border: var(--border);
+      border-radius: var(--borderRadius);
+      font-weight: var(--fontWeight);
+    }
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9em;
+
+    span {
+      background-color: var(--darkMain);
+      font-size: 0.9em;
+      color: var(--orange);
+    }
+
+    small {
+      font-size: 0.75em;
+    }
+  }
+}
+
+.config-controls__image-name {
+  font-size: 0.9em;
+
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: var(--fontWeight);
+  }
+
+  &>div {
+    display: flex;
+    gap: 5px;
+  }
+
+  &>div input[type="text"] {
+    flex: 1;
+    font-size: 0.85em;
+    padding: 2px;
+    padding-left: 8px;
+
+    &:focus {
+      outline: 2px solid color-mix(in srgb, var(--darkMain) 70%, transparent);
+    }
+  }
+
+  select {
+    border: none;
+    outline: none;
+    border-radius: var(--borderRadius);
+    cursor: pointer;
+    flex: auto;
+  }
+
+  em {
+    font-size: 0.75em;
+    font-weight: bold;
+  }
+}
+
+.download-modal__form .download-discard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  strong {
+    font-size: 0.75em;
+  }
+
+  button {
+    display: grid;
+    place-content: center;
+    padding: 5px;
+    font-size: 1.1rem;
+  }
+}
+
+.download-modal__form .download-discard>div {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+
+  button:first-child {
+    background-color: var(--orange);
+    color: var(--dark);
+    border: none;
+    border-radius: var(--borderRadius) 0 0 var(--borderRadius);
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--dark) 15%, var(--orange));
+    }
+  }
+
+  button:last-child {
+    background-color: transparent;
+    border: var(--border);
+    border-left: none;
+    border-radius: 0 var(--borderRadius) var(--borderRadius) 0;
+
+    &>svg {
+      width: 28px;
+      aspect-ratio: 1;
+    }
+  }
+}

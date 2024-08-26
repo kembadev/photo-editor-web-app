@@ -1,0 +1,89 @@
+:root {
+  --boxSpacing: 40px;
+  --colorFirstQuadrant: #67e6dc;
+  --colorSecondQuadrant: #17c0eb;
+  --colorThirdQuadrant: var(--colorFirstQuadrant);
+  --colorFourthQuadrant: var(--colorSecondQuadrant);
+  --spinnerBackground: conic-gradient(var(--colorFirstQuadrant) 0 0.25turn,
+      var(--colorSecondQuadrant) 0.25turn 0.5turn,
+      var(--colorThirdQuadrant) 0.5turn 0.75turn,
+      var(--colorFourthQuadrant) 0.75turn 1turn);
+}
+
+.upload-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 60px;
+  font-size: 1rem;
+
+  h1 {
+    font-size: 2.85em;
+    margin: 0;
+    text-align: center;
+  }
+}
+
+.upload-image .form-image-input {
+  box-sizing: border-box;
+  width: 220px;
+  aspect-ratio: 1;
+  display: grid;
+  align-items: center;
+  text-align: center;
+  padding: 10px;
+  position: relative;
+  background-color: var(--blue);
+  border-radius: 50%;
+  transition: all 200ms;
+
+  &>div {
+    font-size: 0.8em;
+  }
+
+  span {
+    width: 100px;
+
+    svg {
+      width: inherit;
+      aspect-ratio: 1;
+    }
+  }
+
+  strong {
+    display: block;
+  }
+
+  label {
+    text-decoration-line: underline;
+    font-size: 0.9em;
+    cursor: pointer;
+  }
+
+  &+p {
+    font-size: 0.9em;
+    font-style: italic;
+    margin: 0;
+  }
+}
+
+.upload-image .form-image-input::before {
+  content: "";
+  width: calc(100% + var(--boxSpacing));
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  position: absolute;
+  left: calc(var(--boxSpacing) / 2 * -1);
+  border-radius: 50%;
+  animation: spin 50s linear infinite;
+  background-image: var(--spinnerBackground);
+  box-shadow: 0 0 5px var(--contrastColor);
+  z-index: -5;
+}
+
+@keyframes spin {
+
+  to {
+    transform: rotate(1turn);
+  }
+}

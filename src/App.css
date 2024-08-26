@@ -1,0 +1,11 @@
+:root {
+  --borderRadius: 3px;
+  --highlightColor: #00adb5;
+  --contrastColor: #f5f6fa;
+  --blue: #0a3d62;
+}
+
+#root:not(:has(canvas)) {
+  padding: 20px;
+  padding-top: 0;
+}
