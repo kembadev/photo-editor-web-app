@@ -35,6 +35,13 @@ function doJob (updateOffscreenCanvasImageBytes: UpdateOffscreenCanvasImageBytes
     name: 'OFFSCREEN_CANVAS_WORKER'
   })
 
+  const onWorkerTerminate = () => {
+    worker.terminate()
+    queue.clear()
+  }
+
+  window.addEventListener(EVENTS.TERMINATE_OFFSCREEN_CANVAS_WORKER, onWorkerTerminate)
+
   let isFirstJob = true
   let isTaskRunning = false
   let latestImageBytes: Uint8Array

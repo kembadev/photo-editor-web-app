@@ -7,7 +7,7 @@ interface ImageScaler {
   imgHeight: number
 }
 
-export interface ImageScalerResponsePayload {
+interface ImageScalerResponsePayload {
   scalingImageBytes: GetImageBytesReturn
 }
 

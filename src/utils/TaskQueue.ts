@@ -12,4 +12,9 @@ export class TaskQueue<T> {
   getTasksLength () {
     return this.#tasks.length
   }
+
+  clear () {
+    this.#tasks.splice(0, this.#tasks.length)
+    return this.#tasks.length
+  }
 }

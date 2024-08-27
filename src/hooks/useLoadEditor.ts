@@ -88,7 +88,7 @@ export function useLoadEditor () {
     })
   }, [UICanvas, UICanvasContext2D, UICanvasContainer, offscreenCanvas, offscreenCanvasContext2D, setInitialCharge])
 
-  const onLoadEditor = useCallback((fn?: () => void) => {
+  const onEditorLoad = useCallback((fn?: () => void) => {
     if (!providedImgFile) return
 
     const blob = new Blob([providedImgFile], { type: providedImgFile.type })
@@ -104,5 +104,5 @@ export function useLoadEditor () {
     }, { signal: aborter.signal })
   }, [providedImgFile, onLoadImage])
 
-  return { onLoadEditor }
+  return { onEditorLoad }
 }

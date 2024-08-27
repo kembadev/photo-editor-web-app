@@ -8,9 +8,6 @@ export function useAction () {
   const { setInitialCharge, clearCanvas, actionMiddleware, taskRunningChecker } = useActionMiddleware()
   const { UICanvas } = useUICanvas()
 
-  // ** NOTE **
-  // payload's canvas referent properties must be those for the UICanvas
-
   const invertCanvas = () => {
     actionMiddleware({
       type: IMAGE_BYTES_ACTION_TYPES.INVERT,

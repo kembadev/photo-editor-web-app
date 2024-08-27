@@ -19,7 +19,7 @@ export default function Editor () {
   } = useTools()
 
   const { providedImgFile } = useImageFile()
-  const { onLoadEditor } = useLoadEditor()
+  const { onEditorLoad } = useLoadEditor()
 
   const isInitialLoad = useRef(true)
 
@@ -27,8 +27,8 @@ export default function Editor () {
     if (!providedImgFile || !isInitialLoad.current) return
 
     isInitialLoad.current = false
-    onLoadEditor(updateIsLoading)
-  }, [providedImgFile, onLoadEditor, updateIsLoading])
+    onEditorLoad(updateIsLoading)
+  }, [providedImgFile, onEditorLoad, updateIsLoading])
 
   return (
     <>

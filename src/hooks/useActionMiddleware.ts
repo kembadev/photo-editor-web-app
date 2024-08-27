@@ -8,7 +8,7 @@ import { useOffscreenCanvas } from './useOffscreenCanvas.ts'
 import { UICanvasContext } from '../context/UICanvasContext.ts'
 import { OffscreenCanvasContext } from '../context/OffscreenCanvasContext.ts'
 
-import { getUpdatedImageBytes, type ReducerAction } from '../reducer-like/ImageBytes.ts'
+import { getUpdatedImageBytes, initialImageBytes, type ReducerAction } from '../reducer-like/ImageBytes.ts'
 
 import { taskGluer, type Modifier } from '../methods/handleTasksQueue.ts'
 import { dispatchWarning } from '../methods/dispatchWarning.ts'
@@ -42,14 +42,19 @@ export function useActionMiddleware () {
     processesRunning: 0
   })
 
-  const { UICanvas, UICanvasImageBytes } = useUICanvas()
-  const { offscreenCanvas } = useOffscreenCanvas()
+  const {
+    UICanvas,
+    UICanvasContext2D,
+    UICanvasImageBytes
+  } = useUICanvas()
+  const { offscreenCanvas, offscreenCanvasContext2D } = useOffscreenCanvas()
 
   const { setUICanvasImageBytes } = UIContext
   const { setOffscreenCanvasImageBytes } = OffscreenContext
 
   const isFirstOverload = useRef(true)
   const enqueueTask = useRef<((action: ReducerAction, fn?: Modifier) => void) | null>(null)
+  const isMiddlewareBlocked = useRef(false)
 
   const setInitialCharge = useCallback(({
     initialUICanvasImageBytes,
@@ -69,30 +74,42 @@ export function useActionMiddleware () {
     })
   }, [offscreenCanvas, setOffscreenCanvasImageBytes, setUICanvasImageBytes])
 
-  // since clear, terminate worker, empty queue
-  // this can be controlled through an event dispatcher
-  const clearCanvas = () => {
-    console.log('canvas clear')
+  const clearCanvas = useCallback(() => {
+    const terminateWorkerEvent = new Event(EVENTS.TERMINATE_OFFSCREEN_CANVAS_WORKER)
+    window.dispatchEvent(terminateWorkerEvent)
 
-    // setUICanvasImageBytes(initialImageBytes)
-    // setOffscreenCanvasImageBytes(initialImageBytes)
-  }
+    isFirstOverload.current = true
+    isMiddlewareBlocked.current = false
+
+    offscreenCanvas.current = null
+    UICanvasContext2D.current = null
+    offscreenCanvasContext2D.current = null
+
+    setUICanvasImageBytes(initialImageBytes)
+    setOffscreenCanvasImageBytes(initialImageBytes)
+    setTaskRunningChecker({ isQueueClear: true, processesRunning: 0 })
+  }, [offscreenCanvas, UICanvasContext2D, offscreenCanvasContext2D, setUICanvasImageBytes, setOffscreenCanvasImageBytes])
 
   const actionMiddleware = async (action: ReducerAction, fn?: ModifierCallback) => {
-    if (isFirstOverload.current || !enqueueTask.current) return
+    if (isFirstOverload.current ||
+      !enqueueTask.current ||
+      isMiddlewareBlocked.current) return
+
+    isMiddlewareBlocked.current = true
 
     try {
       const result = await getUpdatedImageBytes(UICanvasImageBytes, action)
 
       if (result instanceof Error) throw result
-      if (result === undefined) throw new Error('Something went wrong.')
 
       setUICanvasImageBytes(result)
     } catch (err) {
+      isMiddlewareBlocked.current = false
+
       if (err instanceof Error) {
         if (err.name === 'NetworkError') return dispatchWarning(err.message)
 
-        dispatchWarning('Something went wrong. Try again later.')
+        return dispatchWarning('Something went wrong.')
       }
 
       return
@@ -101,9 +118,10 @@ export function useActionMiddleware () {
     if (fn) fn(UICanvas.current!)
 
     enqueueTask.current(action, fn)
+    isMiddlewareBlocked.current = false
   }
 
-  const onRunningTask = useCallback((e: CustomEvent<number>) => {
+  const onTaskRunning = useCallback((e: CustomEvent<number>) => {
     const processesRunning = e.detail
 
     setTaskRunningChecker({
@@ -113,12 +131,12 @@ export function useActionMiddleware () {
   }, [])
 
   useEffect(() => {
-    window.addEventListener(EVENTS.TASK_PROCESSING, onRunningTask as EventListener)
+    window.addEventListener(EVENTS.TASK_PROCESSING, onTaskRunning as EventListener)
 
     return () => {
-      window.removeEventListener(EVENTS.TASK_PROCESSING, onRunningTask as EventListener)
+      window.removeEventListener(EVENTS.TASK_PROCESSING, onTaskRunning as EventListener)
     }
-  }, [onRunningTask])
+  }, [onTaskRunning])
 
   return { setInitialCharge, clearCanvas, actionMiddleware, taskRunningChecker }
 }

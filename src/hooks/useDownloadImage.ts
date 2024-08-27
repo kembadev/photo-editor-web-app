@@ -2,6 +2,7 @@ import { FormEvent, useCallback, useState } from 'react'
 import { useOffscreenCanvas } from './useOffscreenCanvas.ts'
 
 import { getImageScaler } from '../methods/getImageScaler.ts'
+import { getInternetConnectionStatus } from '../utils/NetworkStatus.ts'
 
 import DownloadWorker from '../dedicated-workers/download.ts?worker'
 
@@ -58,17 +59,17 @@ export function useDownloadImage () {
         name: 'DOWNLOAD_WORKER'
       })
 
+      const dispatchDownloadError = (msg: string) => {
+        setDownloadError(msg)
+
+        setTimeout(() => {
+          setDownloadError(null)
+        }, 5000)
+      }
+
       if (!(scalingImageBytes instanceof Uint8Array)) {
         worker.terminate()
         setIsDownloading(false)
-
-        const dispatchDownloadError = (msg: string) => {
-          setDownloadError(msg)
-
-          setTimeout(() => {
-            setDownloadError(null)
-          }, 5000)
-        }
 
         if (scalingImageBytes === undefined) {
           dispatchDownloadError('Something went wrong. If the problem persists, it may be due to security reasons.')
@@ -103,7 +104,15 @@ export function useDownloadImage () {
         worker.terminate()
         setIsDownloading(false)
 
-        console.error('Download failed.')
+        getInternetConnectionStatus()
+          .then(ok => {
+            if (!ok) {
+              dispatchDownloadError('No internet connection.')
+              return
+            }
+
+            console.error('Download failed.')
+          })
       }
     })()
   }, [isDownloading, offscreenCanvas, offscreenCanvasImageBytes])

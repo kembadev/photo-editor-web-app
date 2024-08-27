@@ -1,6 +1,6 @@
 import './Screen.css'
 
-import { getNetworkConnectionStatus } from '../utils/NetworkStatus.ts'
+import { getInternetConnectionStatus } from '../utils/NetworkStatus.ts'
 
 import { lazy, Suspense } from 'react'
 import { useImageFile } from '../hooks/useImageFile.ts'
@@ -14,9 +14,9 @@ import Loading from './Loading.tsx'
 const LazyEditor = lazy(() => (
   import('./Editor.tsx')
     .catch(async () => {
-      const networkConnectionStatus = await getNetworkConnectionStatus()
+      const ok = await getInternetConnectionStatus()
 
-      if (!networkConnectionStatus) {
+      if (!ok) {
         return ({
           default: () => (
             <DefaultComponent msg='Network connection error. Reload the page.' />

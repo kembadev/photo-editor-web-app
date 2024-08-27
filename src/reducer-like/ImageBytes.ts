@@ -1,9 +1,6 @@
 import { type DIRECTION } from '../consts.ts'
 
-import { NetworkError } from '../error-handling/NetworkError.ts'
-
 import { lazyLoading, suspenseLoading } from '../utils/LazyLoading.ts'
-import { getNetworkConnectionStatus } from '../utils/NetworkStatus.ts'
 
 export const initialImageBytes = new Uint8Array()
 
@@ -57,14 +54,10 @@ const imageBytes: GetUpdatedImageBytes = async (state, action) => {
 export async function getUpdatedImageBytes (
   state: Uint8Array,
   action: ReducerAction
-): Promise<Uint8Array | Error | void> {
+): Promise<Uint8Array | Error> {
   try {
     return await imageBytes(state, action)
   } catch (err) {
-    const networkConnectionStatus = await getNetworkConnectionStatus()
-
-    if (!networkConnectionStatus) return new NetworkError('Network connection error. Reload the page.')
-
-    if (err instanceof Error) return err
+    return err as Error
   }
 }

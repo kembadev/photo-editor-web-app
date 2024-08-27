@@ -3,9 +3,7 @@ import './ControlPanel.css'
 import { type AvailableToolsNames, AVAILABLE_TOOLS } from './Tools/tools.tsx'
 
 import { ReactNode, useMemo, useRef } from 'react'
-/* import { useLogs } from '../hooks/useLogs.js'
-import { useImageBytes } from '../hooks/useImageBytes.js'
-import { useCanvas } from '../hooks/useCanvas.js' */
+import { useDiscardImage } from '../hooks/useDiscardImage.ts'
 
 import { UndoIcon, RedoIcon } from './Icons.tsx'
 import { ToolsList } from './Tools/ToolsList.tsx'
@@ -16,58 +14,7 @@ interface ControlPanelProps {
 }
 
 export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
-  /* const { logs, addLog, changeAfterUndo } = useLogs()
-  const { currentImageBytes } = useImageBytes()
-  const { canvas, scaling, canvasOrientation } = useCanvas()
-  const {
-    handleUndo,
-    handleRedo,
-    clearCanvas
-  } = useControls()
-
-  const modal = useRef()
-
-  useEffect(() => {
-    if (!currentImageBytes) return
-
-    const { width: canvasWidth, height: canvasHeight } = canvas.current
-    const orientation = canvasOrientation
-
-    const newLog = {
-      scaling,
-      imageBytes: currentImageBytes,
-      orientation,
-      canvasWidth,
-      canvasHeight,
-      isCurrentState: true
-    }
-
-    const currentStateLogIndex = logs.findIndex(({ isCurrentState }) => Boolean(isCurrentState))
-    const currentStateLog = logs[currentStateLogIndex]
-    const isCurrentImageBytesDifferentOfTheUsedLog = !currentImageBytes.every(
-      (value, index) => value === currentStateLog?.imageBytes[index]
-    )
-
-    if (currentStateLogIndex !== logs.length - 1) {
-      if (isCurrentImageBytesDifferentOfTheUsedLog) {
-        changeAfterUndo({ currentStateLogIndex, newLog })
-      }
-
-      return
-    }
-
-    if (currentStateLogIndex === logs.length - 1 && !isCurrentImageBytesDifferentOfTheUsedLog) return
-
-    addLog(newLog)
-  }, [currentImageBytes])
-
-  const openModal = () => {
-    modal.current.showModal()
-  }
-
-  const currentStateIndex = useMemo(() => logs.findIndex(
-    ({ isCurrentState }) => Boolean(isCurrentState)
-  ), [logs]) */
+  const { discardImage } = useDiscardImage()
 
   const modalRef = useRef<DownloadModalHandle>(null)
 
@@ -128,7 +75,7 @@ export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
         <button
           className='discard-btn'
           title='Discard image'
-          /* onClick={clearCanvas} */
+          onClick={discardImage}
         >
           Discard
         </button>

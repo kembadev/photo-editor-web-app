@@ -1,65 +1,97 @@
-import { type ImageScalerResponsePayload, getImageScaler } from '../methods/getImageScaler.ts'
-
 import { ZOOM_LIMITS } from '../consts.ts'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useUICanvas } from './useUICanvas.ts'
+
 import { dispatchWarning } from '../methods/dispatchWarning.ts'
+import { getImageScaler } from '../methods/getImageScaler.ts'
 import { getClippedImageBytes } from '../methods/getClippedImageBytes.ts'
+import { getRestOfPropsOnClippedImageBytes } from '../helpers/clippedImageBytesProps.ts'
+
+export type PointerPosition = { x: number; y: number } | 'center'
+
+interface Zoom {
+  level: number;
+  pointerPosition: PointerPosition
+}
+
+interface ChangeZoom {
+  pointerPosition: PointerPosition;
+  n?: number
+}
+
+const changeZoomDefaultProps: ChangeZoom = { pointerPosition: 'center', n: 0.2 }
 
 export function useZoom () {
-  const [zoom, setZoom] = useState(1)
+  const [zoom, setZoom] = useState<Zoom>({
+    level: 1,
+    pointerPosition: 'center'
+  })
 
   const {
     UICanvas,
     UICanvasContext2D,
-    UICanvasContainer,
     UICanvasImageBytes
   } = useUICanvas()
 
+  const prevZoom = useRef<Zoom>(zoom)
   const cacheCleaner = useRef<{ clearCache:() => void } | null>(null)
 
-  const zoomIn = useCallback((n = 0.2) => {
-    setZoom(prevZoom => {
-      const desiredZoom = Number((prevZoom + n).toFixed(2))
+  const zoomIn = useCallback(({ pointerPosition = 'center', n = 0.2 }: ChangeZoom = changeZoomDefaultProps) => {
+    if (zoom.level === ZOOM_LIMITS.MAX) return
 
-      const newZoom = desiredZoom > ZOOM_LIMITS.MAX
+    setZoom(prevZoom => {
+      const { level } = prevZoom
+
+      const desiredZoom = Number((level + n).toFixed(2))
+
+      const newZoomLevel = desiredZoom > ZOOM_LIMITS.MAX
         ? ZOOM_LIMITS.MAX
         : desiredZoom
 
-      return newZoom
+      return { level: newZoomLevel, pointerPosition }
     })
-  }, [])
+  }, [zoom])
 
-  const zoomOut = useCallback((n = 0.2) => {
+  const zoomOut = useCallback(({ pointerPosition = 'center', n = 0.2 }: ChangeZoom = changeZoomDefaultProps) => {
+    if (zoom.level === ZOOM_LIMITS.MIN) return
+
     setZoom(prevZoom => {
-      const desiredZoom = Number((prevZoom - n).toFixed(2))
+      const { level } = prevZoom
 
-      const newZoom = desiredZoom < ZOOM_LIMITS.MIN
+      const desiredZoom = Number((level - n).toFixed(2))
+
+      const newZoomLevel = desiredZoom < ZOOM_LIMITS.MIN
         ? ZOOM_LIMITS.MIN
         : desiredZoom
 
-      return newZoom
+      return { level: newZoomLevel, pointerPosition }
     })
-  }, [])
+  }, [zoom])
 
   const restoreZoom = useCallback(() => {
-    setZoom(1)
+    setZoom({
+      level: 1,
+      pointerPosition: 'center'
+    })
   }, [])
 
   const onWheelChange = useCallback((e: WheelEvent) => {
     const { deltaY } = e
 
-    const zoomLevel = 0.0008
+    const n = deltaY * 0.0008
+
+    const pointerPosition = 'center' // bad
 
     if (deltaY < 0) {
-      zoomIn(deltaY * -zoomLevel)
-    } else {
-      zoomOut(deltaY * zoomLevel)
+      zoomIn({ pointerPosition, n: -n })
+      return
     }
+
+    zoomOut({ pointerPosition, n })
   }, [zoomIn, zoomOut])
 
-  const getScalingImageBytes: ((scaling: number) => Promise<ImageScalerResponsePayload>) | void = useMemo(() => {
+  const getScalingImageBytes = useMemo(() => {
     if (!UICanvas.current) return
 
     const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
@@ -91,45 +123,56 @@ export function useZoom () {
 
   useEffect(() => {
     if (!getScalingImageBytes ||
-      !UICanvas.current ||
-      !UICanvasContainer.current) return
+      !UICanvas.current) return
 
     const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
 
     ;(async () => {
-      const { scalingImageBytes: expandedImageBytes } = await getScalingImageBytes(zoom)
+      const { scalingImageBytes: expandedImageBytes } = await getScalingImageBytes(zoom.level)
 
-      if (expandedImageBytes === undefined) {
-        dispatchWarning('Unexpected error when zooming the image.')
+      if (!(expandedImageBytes instanceof Uint8Array)) {
+        setZoom(prevZoom.current)
+
+        if (expandedImageBytes === undefined) {
+          dispatchWarning('Unexpected error when zoom in on the image.')
+          return
+        }
+
+        dispatchWarning('The image is too large to zoom in further.')
         return
       }
 
-      if (expandedImageBytes === 'RangeError') {
-        dispatchWarning('Image is too large to keep zooming it.')
-        return
-      }
+      prevZoom.current = zoom
 
-      const expandedWidth = UICanvasWidth * zoom
-      const expandedHeight = UICanvasHeight * zoom
+      const { level, pointerPosition } = zoom
+
+      const expandedWidth = UICanvasWidth * level
+      const expandedHeight = UICanvasHeight * level
+
+      const listOfRequirements = [
+        getRestOfPropsOnClippedImageBytes({
+          widthOfImgToCut: expandedWidth,
+          heightOfImgToCut: expandedHeight,
+          finalWidth: UICanvasWidth,
+          finalHeight: UICanvasHeight,
+          pointerPosition
+        })
+      ]
 
       const clippedImageBytes = await getClippedImageBytes({
-        imageBytes: expandedImageBytes,
-        imgWidth: expandedWidth,
-        imgHeight: expandedHeight,
-        desiredDimensionsList: [
-          {
-            desiredWidth: UICanvasWidth,
-            desiredHeight: UICanvasHeight
-          }
-        ]
+        imageBytesToCut: expandedImageBytes,
+        widthOfImgToCut: expandedWidth,
+        heightOfImgToCut: expandedHeight,
+        listOfRequirements
       })
+
       const { imageBytes, dimensions } = clippedImageBytes[0]
 
       const imageData = UICanvasContext2D.current!.createImageData(dimensions.width, dimensions.height)
       imageData.data.set(imageBytes)
       UICanvasContext2D.current!.putImageData(imageData, 0, 0)
     })()
-  }, [getScalingImageBytes, zoom, UICanvas, UICanvasContext2D, UICanvasContainer])
+  }, [getScalingImageBytes, zoom, UICanvas, UICanvasContext2D])
 
   return { zoom, zoomIn, zoomOut, restoreZoom }
 }

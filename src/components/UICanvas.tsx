@@ -13,7 +13,6 @@ import { useOffscreenCanvas } from '../hooks/useOffscreenCanvas.ts'
 import { useZoom } from '../hooks/useZoom.ts'
 
 import { PlusIcon, MinusIcon } from './Icons.tsx'
-// import { OverlayCanvas } from './OverlayCanvas.tsx'
 
 const LazyOffscreenCanvasDev = lazy(() => import('./OffscreenCanvasDev.tsx'))
 
@@ -80,7 +79,6 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
         ref={UICanvasContainer}
         style={{ position: 'relative' }}
       >
-        {/* {currentToolSelected === 'Crop' && <OverlayCanvas />} */}
         <Suspense>
           {IS_DEVELOPMENT && <LazyOffscreenCanvasDev />}
         </Suspense>
@@ -93,8 +91,8 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
             title='Zoom In'
             onClick={() => zoomIn()}
             style={{
-              backgroundColor: zoom < ZOOM_LIMITS.MAX ? 'var(--btnBackground)' : 'transparent',
-              cursor: zoom < ZOOM_LIMITS.MAX ? 'pointer' : 'auto'
+              backgroundColor: zoom.level < ZOOM_LIMITS.MAX ? 'var(--btnBackground)' : 'transparent',
+              cursor: zoom.level < ZOOM_LIMITS.MAX ? 'pointer' : 'auto'
             }}
           >
             <PlusIcon />
@@ -103,8 +101,8 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
             title='Zoom Out'
             onClick={() => zoomOut()}
             style={{
-              backgroundColor: zoom > ZOOM_LIMITS.MIN ? 'var(--btnBackground)' : 'transparent',
-              cursor: zoom > ZOOM_LIMITS.MIN ? 'pointer' : 'auto'
+              backgroundColor: zoom.level > ZOOM_LIMITS.MIN ? 'var(--btnBackground)' : 'transparent',
+              cursor: zoom.level > ZOOM_LIMITS.MIN ? 'pointer' : 'auto'
             }}
           >
             <MinusIcon />

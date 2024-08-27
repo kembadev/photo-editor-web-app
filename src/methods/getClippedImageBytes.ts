@@ -4,12 +4,16 @@ import { imageBytes2BlobURL } from '../helpers/imageBytes2BlobURL.ts'
 import { getImageBytes } from './getImageBytes.ts'
 
 interface ClippedImageBytes {
-  imageBytes: Uint8Array;
-  imgWidth: number;
-  imgHeight: number;
+  imageBytesToCut: Uint8Array;
+  widthOfImgToCut: number;
+  heightOfImgToCut: number;
   MIMEType?: CanvasAcceptedMimeTypes;
   quality?: number;
-  desiredDimensionsList: { desiredWidth: number; desiredHeight: number }[]
+  listOfRequirements: {
+    finalWidth: number;
+    finalHeight: number;
+    fromCorner: { sx: number; sy: number }
+  }[]
 }
 
 export interface ClippedImageBytesResponse {
@@ -18,17 +22,17 @@ export interface ClippedImageBytesResponse {
 }
 
 export function getClippedImageBytes ({
-  imageBytes,
-  imgWidth,
-  imgHeight,
+  imageBytesToCut,
+  widthOfImgToCut,
+  heightOfImgToCut,
   MIMEType = 'image/webp',
   quality = 0.85,
-  desiredDimensionsList
+  listOfRequirements
 }: ClippedImageBytes) {
   const imgSrc = imageBytes2BlobURL({
-    imageBytes,
-    imgWidth,
-    imgHeight,
+    imageBytes: imageBytesToCut,
+    imgWidth: widthOfImgToCut,
+    imgHeight: heightOfImgToCut,
     MIMEType,
     quality
   })
@@ -41,25 +45,30 @@ export function getClippedImageBytes ({
   const onLoadImage = (res: (value: ClippedImageBytesResponse[]) => void) => {
     const clippedImageBytesList: ClippedImageBytesResponse[] = []
 
-    for (const { desiredWidth, desiredHeight } of desiredDimensionsList) {
-      const offscreen = new OffscreenCanvas(desiredWidth, desiredHeight)
+    for (const requirements of listOfRequirements) {
+      const {
+        finalWidth,
+        finalHeight,
+        fromCorner
+      } = requirements
+
+      const offscreen = new OffscreenCanvas(finalWidth, finalHeight)
       const offscreenContext = offscreen.getContext('2d')!
 
-      const sx = (imgWidth - desiredWidth) / 2
-      const sy = (imgHeight - desiredHeight) / 2
+      const { sx, sy } = fromCorner
 
-      offscreenContext.drawImage(imgElement, sx, sy, desiredWidth, desiredHeight, 0, 0, desiredWidth, desiredHeight)
+      offscreenContext.drawImage(imgElement, sx, sy, finalWidth, finalHeight, 0, 0, finalWidth, finalHeight)
 
       const clippedImageBytes = getImageBytes({
         ctx: offscreenContext,
-        canvasWidth: desiredWidth,
-        canvasHeight: desiredHeight
+        canvasWidth: finalWidth,
+        canvasHeight: finalHeight
       }) as Uint8Array
 
       clippedImageBytesList.push({
         dimensions: {
-          width: desiredWidth,
-          height: desiredHeight
+          width: finalWidth,
+          height: finalHeight
         },
         imageBytes: clippedImageBytes
       })

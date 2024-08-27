@@ -1,6 +1,11 @@
+import { getInternetConnectionStatus } from './NetworkStatus.ts'
+
+import { NetworkError } from '../error-handling/NetworkError.ts'
+
 interface DynamicImportBase<T, U extends boolean> {
   returnedValue: T;
-  importRightNow: U
+  importRightNow: U;
+  isAlreadyImported: U extends true ? true : boolean
 }
 
 type DynamicImport<T> = Promise<
@@ -12,17 +17,34 @@ export async function lazyLoading<T> (
   load: () => Promise<T>,
   importRightNow = false
 ): DynamicImport<T> {
-  if (importRightNow) return { importRightNow, returnedValue: await load() }
+  if (importRightNow) {
+    return {
+      importRightNow,
+      returnedValue: await load(),
+      isAlreadyImported: true
+    }
+  }
 
-  return { importRightNow, returnedValue: () => load() }
+  return { importRightNow, returnedValue: () => load(), isAlreadyImported: false }
 }
 
 export async function suspenseLoading<T> (
   load: DynamicImport<T>
 ): Promise<T> {
-  const { returnedValue, importRightNow } = await load
+  const res = await load
+  const { returnedValue, importRightNow, isAlreadyImported } = res
 
   if (importRightNow) return returnedValue
+
+  if (!isAlreadyImported) {
+    const ok = await getInternetConnectionStatus()
+
+    if (!ok) {
+      throw new NetworkError('No internet connection. Try again later.')
+    }
+
+    res.isAlreadyImported = true
+  }
 
   return returnedValue()
 }
