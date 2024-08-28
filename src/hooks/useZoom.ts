@@ -34,7 +34,7 @@ export function useZoom () {
     UICanvasImageBytes
   } = useUICanvas()
 
-  const prevZoom = useRef<Zoom>(zoom)
+  const prevZoom = useRef(zoom)
   const cacheCleaner = useRef<{ clearCache:() => void } | null>(null)
 
   const zoomIn = useCallback(({ pointerPosition = 'center', n = 0.2 }: ChangeZoom = changeZoomDefaultProps) => {
@@ -77,11 +77,20 @@ export function useZoom () {
   }, [])
 
   const onWheelChange = useCallback((e: WheelEvent) => {
-    const { deltaY } = e
+    if (!UICanvas.current) return
+
+    // to do: improve user experience when zooming in and out with mouse on PC
+    // the enlarged image jumps when zooming to another position
+
+    const { deltaY, clientX, clientY } = e
+    const { left, top } = UICanvas.current.getBoundingClientRect()
+
+    const x = clientX - left
+    const y = clientY - top
+
+    const pointerPosition = { x, y }
 
     const n = deltaY * 0.0008
-
-    const pointerPosition = 'center' // bad
 
     if (deltaY < 0) {
       zoomIn({ pointerPosition, n: -n })
@@ -89,7 +98,7 @@ export function useZoom () {
     }
 
     zoomOut({ pointerPosition, n })
-  }, [zoomIn, zoomOut])
+  }, [zoomIn, zoomOut, UICanvas])
 
   const getScalingImageBytes = useMemo(() => {
     if (!UICanvas.current) return
@@ -113,6 +122,8 @@ export function useZoom () {
     if (!UICanvas.current) return
 
     const canvas = UICanvas.current
+
+    // to do: add zoom by tapping on mobile-like electronic devices
 
     canvas.addEventListener('wheel', onWheelChange)
 
@@ -149,21 +160,18 @@ export function useZoom () {
       const expandedWidth = UICanvasWidth * level
       const expandedHeight = UICanvasHeight * level
 
-      const listOfRequirements = [
-        getRestOfPropsOnClippedImageBytes({
-          widthOfImgToCut: expandedWidth,
-          heightOfImgToCut: expandedHeight,
-          finalWidth: UICanvasWidth,
-          finalHeight: UICanvasHeight,
-          pointerPosition
-        })
-      ]
+      const restOfProps = getRestOfPropsOnClippedImageBytes({
+        zoomLevel: zoom.level,
+        widthOfImgToCut: expandedWidth,
+        heightOfImgToCut: expandedHeight,
+        UICanvasWidth,
+        UICanvasHeight,
+        pointerPosition
+      })
 
       const clippedImageBytes = await getClippedImageBytes({
         imageBytesToCut: expandedImageBytes,
-        widthOfImgToCut: expandedWidth,
-        heightOfImgToCut: expandedHeight,
-        listOfRequirements
+        ...restOfProps
       })
 
       const { imageBytes, dimensions } = clippedImageBytes[0]

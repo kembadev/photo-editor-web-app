@@ -3,6 +3,7 @@ import { useImageFile } from './useImageFile.ts'
 import { useUICanvas } from './useUICanvas.ts'
 import { useOffscreenCanvas } from './useOffscreenCanvas.ts'
 import { useControls } from './useControls.ts'
+import { useDiscardImage } from './useDiscardImage.ts'
 
 import { getImageResize } from '../methods/getImageResize.ts'
 import { getImageBytes } from '../methods/getImageBytes.ts'
@@ -22,6 +23,7 @@ export function useLoadEditor () {
   } = useOffscreenCanvas()
 
   const { setInitialCharge } = useControls()
+  const { discardImage } = useDiscardImage()
 
   const onLoadImage = useCallback((imgElement: HTMLImageElement, aborter: AbortController) => {
     aborter.abort()
@@ -65,11 +67,12 @@ export function useLoadEditor () {
       canvasHeight: UICanvasHeight
     })
 
-    const areInitialImageBytesInvalid = !(initialOffscreenCanvasImageBytes instanceof Uint8Array) ||
+    const isInitialImageBytesInvalid = !(initialOffscreenCanvasImageBytes instanceof Uint8Array) ||
       !(initialUICanvasImageBytes instanceof Uint8Array)
 
-    if (areInitialImageBytesInvalid) {
-      // discard()
+    if (isInitialImageBytesInvalid) {
+      discardImage()
+
       const doesMemmoryExceed = initialOffscreenCanvasImageBytes === 'RangeError' ||
         initialUICanvasImageBytes === 'RangeError'
 
@@ -86,7 +89,7 @@ export function useLoadEditor () {
       initialOffscreenCanvasImageBytes,
       initialUICanvasImageBytes
     })
-  }, [UICanvas, UICanvasContext2D, UICanvasContainer, offscreenCanvas, offscreenCanvasContext2D, setInitialCharge])
+  }, [UICanvas, UICanvasContext2D, UICanvasContainer, offscreenCanvas, offscreenCanvasContext2D, discardImage, setInitialCharge])
 
   const onEditorLoad = useCallback((fn?: () => void) => {
     if (!providedImgFile) return
