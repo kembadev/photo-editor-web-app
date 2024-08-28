@@ -1,12 +1,10 @@
-import { type ListUnion } from './types/types.ts'
-
 export const CANVAS_ACCEPTED_MIME_TYPES = [
   'image/jpeg',
   'image/png',
   'image/webp'
 ] as const
 
-export type CanvasAcceptedMimeTypes = ListUnion<typeof CANVAS_ACCEPTED_MIME_TYPES>
+export type CanvasAcceptedMimeTypes = typeof CANVAS_ACCEPTED_MIME_TYPES[number]
 
 export const EVENTS = {
   EDITOR_LOADED: 'EDITOR_LOADED',

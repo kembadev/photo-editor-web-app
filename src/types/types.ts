@@ -1,5 +1,3 @@
-export type ListUnion<T> = T[number]
-
 export interface EventListener {
   (evt: Event): void
 }
