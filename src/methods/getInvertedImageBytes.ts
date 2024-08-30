@@ -1,15 +1,26 @@
-import { getModifiedImageBytes } from '../helpers/getModifiedImageBytes.ts'
+import { getImageBytes } from './getImageBytes.ts'
 
-interface ImageInvertedType {
+import { getCanvas } from '../helpers/getCanvas.ts'
+
+interface InvertedImageBytes {
   imageBytes: Uint8Array;
   canvasWidth: number
 }
 
-export function getInvertedImageBytes ({ imageBytes, canvasWidth }: ImageInvertedType) {
-  const invertedImageBytes = getModifiedImageBytes({
-    imageBytes,
-    imgWidth: canvasWidth
-  }, (rowOfPixels) => rowOfPixels.reverse())
+export function getInvertedImageBytes ({ imageBytes, canvasWidth }: InvertedImageBytes) {
+  const canvasHeight = imageBytes.length / (canvasWidth * 4)
 
-  return invertedImageBytes
+  const { ctx } = getCanvas({
+    imageBytes,
+    canvasWidth,
+    canvasHeight
+  }, (_, ctx) => {
+    ctx.setTransform(-1, 0, 0, 1, canvasWidth, 0)
+  })
+
+  return getImageBytes({
+    ctx,
+    canvasWidth,
+    canvasHeight
+  }) as Uint8Array
 }

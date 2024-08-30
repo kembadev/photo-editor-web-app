@@ -1,19 +1,16 @@
-import { type CanvasAcceptedMimeTypes } from '../consts.ts'
-
-import { imageBytes2BlobURL } from '../helpers/imageBytes2BlobURL.ts'
 import { getImageBytes } from './getImageBytes.ts'
+
+import { getCanvas } from '../helpers/getCanvas.ts'
 
 interface ClippedImageBytes {
   imageBytesToCut: Uint8Array;
   widthOfImgToCut: number;
   heightOfImgToCut: number;
-  MIMEType?: CanvasAcceptedMimeTypes;
-  quality?: number;
-  listOfRequirements: {
+  requirements: {
     finalWidth: number;
     finalHeight: number;
     fromCorner: { sx: number; sy: number }
-  }[]
+  }
 }
 
 export interface ClippedImageBytesResponse {
@@ -25,65 +22,25 @@ export function getClippedImageBytes ({
   imageBytesToCut,
   widthOfImgToCut,
   heightOfImgToCut,
-  MIMEType = 'image/webp',
-  quality = 0.85,
-  listOfRequirements
+  requirements
 }: ClippedImageBytes) {
-  const imgSrc = imageBytes2BlobURL({
+  const { finalWidth, finalHeight, fromCorner } = requirements
+  const { sx, sy } = fromCorner
+
+  const { ctx } = getCanvas({
     imageBytes: imageBytesToCut,
-    imgWidth: widthOfImgToCut,
-    imgHeight: heightOfImgToCut,
-    MIMEType,
-    quality
+    canvasWidth: widthOfImgToCut,
+    canvasHeight: heightOfImgToCut
+  }, (canvas, ctx) => {
+    canvas.width = finalWidth
+    canvas.height = finalHeight
+
+    ctx.translate(-sx, -sy)
   })
 
-  const imgElement = document.createElement('img')
-  imgElement.src = imgSrc
-
-  const listenerController = new AbortController()
-
-  const onLoadImage = (res: (value: ClippedImageBytesResponse[]) => void) => {
-    const clippedImageBytesList: ClippedImageBytesResponse[] = []
-
-    for (const requirements of listOfRequirements) {
-      const {
-        finalWidth,
-        finalHeight,
-        fromCorner
-      } = requirements
-
-      const offscreen = new OffscreenCanvas(finalWidth, finalHeight)
-      const offscreenContext = offscreen.getContext('2d')!
-
-      const { sx, sy } = fromCorner
-
-      offscreenContext.drawImage(imgElement, sx, sy, finalWidth, finalHeight, 0, 0, finalWidth, finalHeight)
-
-      const clippedImageBytes = getImageBytes({
-        ctx: offscreenContext,
-        canvasWidth: finalWidth,
-        canvasHeight: finalHeight
-      }) as Uint8Array
-
-      clippedImageBytesList.push({
-        dimensions: {
-          width: finalWidth,
-          height: finalHeight
-        },
-        imageBytes: clippedImageBytes
-      })
-    }
-
-    res(clippedImageBytesList)
-
-    listenerController.abort()
-    URL.revokeObjectURL(imgSrc)
-    imgElement.remove()
-  }
-
-  return new Promise<ClippedImageBytesResponse[]>(resolve => {
-    imgElement.addEventListener('load', () => {
-      onLoadImage(resolve)
-    }, { signal: listenerController.signal })
-  })
+  return getImageBytes({
+    ctx,
+    canvasWidth: finalWidth,
+    canvasHeight: finalHeight
+  }) as Uint8Array
 }

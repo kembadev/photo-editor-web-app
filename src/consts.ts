@@ -21,5 +21,5 @@ export enum DIRECTION {
 
 export const ZOOM_LIMITS = {
   MIN: 1,
-  MAX: 2.5
+  MAX: 5
 }

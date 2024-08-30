@@ -1,7 +1,7 @@
 import { FormEvent, useCallback, useState } from 'react'
 import { useOffscreenCanvas } from './useOffscreenCanvas.ts'
 
-import { getImageScaler } from '../methods/getImageScaler.ts'
+import { getScalingImageBytes } from '../methods/getScalingImageBytes.ts'
 import { getInternetConnectionStatus } from '../utils/NetworkStatus.ts'
 
 import DownloadWorker from '../dedicated-workers/download.ts?worker'
@@ -38,83 +38,80 @@ export function useDownloadImage () {
 
     const { width: offscreenCanvasWidth, height: offscreenCanvasHeight } = offscreenCanvas.current!
 
-    const { scale: getImageScaling, clearCache } = getImageScaler({
+    const {
+      scalingImageBytes,
+      scalingWidth,
+      scalingHeight
+    } = getScalingImageBytes({
       imageBytes: offscreenCanvasImageBytes,
-      imgWidth: offscreenCanvasWidth,
-      imgHeight: offscreenCanvasHeight
+      canvasWidth: offscreenCanvasWidth,
+      canvasHeight: offscreenCanvasHeight,
+      scaling: scale
     })
 
     console.info('Downloading image...')
 
-    ;(async () => {
-      const { scalingImageBytes } = await getImageScaling(scale)
-      clearCache()
+    const offscreen = new OffscreenCanvas(scalingWidth, scalingHeight)
 
-      const imgScalingWidth = offscreenCanvasWidth * scale
-      const imgScalingHeight = offscreenCanvasHeight * scale
+    const worker = new DownloadWorker({
+      name: 'DOWNLOAD_WORKER'
+    })
 
-      const offscreen = new OffscreenCanvas(imgScalingWidth, imgScalingHeight)
+    const dispatchDownloadError = (msg: string) => {
+      setDownloadError(msg)
 
-      const worker = new DownloadWorker({
-        name: 'DOWNLOAD_WORKER'
-      })
+      setTimeout(() => {
+        setDownloadError(null)
+      }, 5000)
+    }
 
-      const dispatchDownloadError = (msg: string) => {
-        setDownloadError(msg)
+    if (!(scalingImageBytes instanceof Uint8Array)) {
+      worker.terminate()
+      setIsDownloading(false)
 
-        setTimeout(() => {
-          setDownloadError(null)
-        }, 5000)
+      if (scalingImageBytes === undefined) {
+        dispatchDownloadError('Something went wrong. If the problem persists, it may be due to security reasons.')
+      } else {
+        dispatchDownloadError('The image is too large to download.')
       }
 
-      if (!(scalingImageBytes instanceof Uint8Array)) {
-        worker.terminate()
-        setIsDownloading(false)
+      return
+    }
 
-        if (scalingImageBytes === undefined) {
-          dispatchDownloadError('Something went wrong. If the problem persists, it may be due to security reasons.')
-        } else {
-          dispatchDownloadError('The image is too large to download.')
-        }
+    const buffer = scalingImageBytes.buffer
+    const MIMEType = `image/${format}`
 
-        return
-      }
+    worker.postMessage({ offscreen, buffer, MIMEType }, [offscreen, buffer])
 
-      const buffer = scalingImageBytes.buffer
-      const MIMEType = `image/${format}`
+    worker.onmessage = (e: MessageEvent<Blob>) => {
+      const blob = e.data
+      const blobURL = URL.createObjectURL(blob)
 
-      worker.postMessage({ offscreen, buffer, MIMEType }, [offscreen, buffer])
+      const anchor = document.createElement('a')
+      anchor.href = blobURL
+      anchor.download = name
+      anchor.click()
 
-      worker.onmessage = (e: MessageEvent<Blob>) => {
-        const blob = e.data
-        const blobURL = URL.createObjectURL(blob)
+      URL.revokeObjectURL(blobURL)
+      worker.terminate()
 
-        const anchor = document.createElement('a')
-        anchor.href = blobURL
-        anchor.download = name
-        anchor.click()
+      setIsDownloading(false)
+    }
 
-        URL.revokeObjectURL(blobURL)
-        worker.terminate()
+    worker.onerror = () => {
+      worker.terminate()
+      setIsDownloading(false)
 
-        setIsDownloading(false)
-      }
+      getInternetConnectionStatus()
+        .then(ok => {
+          if (!ok) {
+            dispatchDownloadError('No internet connection.')
+            return
+          }
 
-      worker.onerror = () => {
-        worker.terminate()
-        setIsDownloading(false)
-
-        getInternetConnectionStatus()
-          .then(ok => {
-            if (!ok) {
-              dispatchDownloadError('No internet connection.')
-              return
-            }
-
-            console.error('Download failed.')
-          })
-      }
-    })()
+          console.error('Download failed.')
+        })
+    }
   }, [isDownloading, offscreenCanvas, offscreenCanvasImageBytes])
 
   return { handleOnSubmit, isDownloading, downloadError }

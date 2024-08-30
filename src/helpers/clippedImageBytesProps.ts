@@ -1,31 +1,30 @@
-import { type PointerPosition } from '../hooks/useZoom.ts'
+import { type Zoom } from '../hooks/useZoom.ts'
 
 import { ImageError } from '../error-handling/ImageError.ts'
 
 interface RestOfPropsOnClippedImageBytes {
-  zoomLevel: number;
-  widthOfImgToCut: number;
-  heightOfImgToCut: number;
+  zoom: Zoom;
   UICanvasWidth: number;
   UICanvasHeight: number;
-  pointerPosition: PointerPosition
 }
 
 export function getRestOfPropsOnClippedImageBytes ({
-  zoomLevel,
-  widthOfImgToCut,
-  heightOfImgToCut,
+  zoom,
   UICanvasWidth,
-  UICanvasHeight,
-  pointerPosition
+  UICanvasHeight
 }: RestOfPropsOnClippedImageBytes) {
-  const sx = pointerPosition === 'center'
-    ? (widthOfImgToCut - UICanvasWidth) / 2
-    : pointerPosition.x * (zoomLevel - 1)
+  const { level: currentZoomLevel, pointerPosition: currentPointerPosition } = zoom
 
-  const sy = pointerPosition === 'center'
+  const widthOfImgToCut = UICanvasWidth * currentZoomLevel
+  const heightOfImgToCut = UICanvasHeight * currentZoomLevel
+
+  const sx = currentPointerPosition === 'center'
+    ? (widthOfImgToCut - UICanvasWidth) / 2
+    : currentPointerPosition.x * (currentZoomLevel - 1)
+
+  const sy = currentPointerPosition === 'center'
     ? (heightOfImgToCut - UICanvasHeight) / 2
-    : pointerPosition.y * (zoomLevel - 1)
+    : currentPointerPosition.y * (currentZoomLevel - 1)
 
   const isFinalWidthOutOfBounds = UICanvasWidth + sx > widthOfImgToCut
   const isFinalHeightOutOfBounds = UICanvasHeight + sy > heightOfImgToCut
@@ -39,10 +38,10 @@ export function getRestOfPropsOnClippedImageBytes ({
   return {
     widthOfImgToCut,
     heightOfImgToCut,
-    listOfRequirements: [{
+    requirements: {
       finalWidth: UICanvasWidth,
       finalHeight: UICanvasHeight,
       fromCorner: { sx, sy }
-    }]
+    }
   }
 }

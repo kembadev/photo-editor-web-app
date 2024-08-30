@@ -1,5 +1,6 @@
-import { getInternetConnectionStatus } from './NetworkStatus.ts'
+import { IS_DEVELOPMENT } from '../config.ts'
 
+import { getInternetConnectionStatus } from './NetworkStatus.ts'
 import { NetworkError } from '../error-handling/NetworkError.ts'
 
 interface DynamicImportBase<T, U extends boolean> {
@@ -35,6 +36,11 @@ export async function suspenseLoading<T> (
   const { returnedValue, importRightNow, isAlreadyImported } = res
 
   if (importRightNow) return returnedValue
+
+  if (IS_DEVELOPMENT) {
+    res.isAlreadyImported = true
+    return returnedValue()
+  }
 
   if (!isAlreadyImported) {
     const ok = await getInternetConnectionStatus()

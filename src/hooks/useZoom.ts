@@ -1,16 +1,16 @@
 import { ZOOM_LIMITS } from '../consts.ts'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useUICanvas } from './useUICanvas.ts'
 
 import { dispatchWarning } from '../methods/dispatchWarning.ts'
-import { getImageScaler } from '../methods/getImageScaler.ts'
+import { getScalingImageBytes } from '../methods/getScalingImageBytes.ts'
 import { getClippedImageBytes } from '../methods/getClippedImageBytes.ts'
 import { getRestOfPropsOnClippedImageBytes } from '../helpers/clippedImageBytesProps.ts'
 
-export type PointerPosition = { x: number; y: number } | 'center'
+type PointerPosition = { x: number; y: number } | 'center'
 
-interface Zoom {
+export interface Zoom {
   level: number;
   pointerPosition: PointerPosition
 }
@@ -35,7 +35,6 @@ export function useZoom () {
   } = useUICanvas()
 
   const prevZoom = useRef(zoom)
-  const cacheCleaner = useRef<{ clearCache:() => void } | null>(null)
 
   const zoomIn = useCallback(({ pointerPosition = 'center', n = 0.2 }: ChangeZoom = changeZoomDefaultProps) => {
     if (zoom.level === ZOOM_LIMITS.MAX) return
@@ -100,24 +99,6 @@ export function useZoom () {
     zoomOut({ pointerPosition, n })
   }, [zoomIn, zoomOut, UICanvas])
 
-  const getScalingImageBytes = useMemo(() => {
-    if (!UICanvas.current) return
-
-    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
-
-    if (cacheCleaner.current) cacheCleaner.current.clearCache()
-
-    const { clearCache, scale } = getImageScaler({
-      imageBytes: UICanvasImageBytes,
-      imgWidth: UICanvasWidth,
-      imgHeight: UICanvasHeight
-    })
-
-    cacheCleaner.current = { clearCache }
-
-    return scale
-  }, [UICanvasImageBytes, UICanvas])
-
   useEffect(() => {
     if (!UICanvas.current) return
 
@@ -134,53 +115,49 @@ export function useZoom () {
 
   useEffect(() => {
     if (!getScalingImageBytes ||
-      !UICanvas.current) return
+      !UICanvas.current ||
+      !UICanvasContext2D.current) return
 
     const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
 
-    ;(async () => {
-      const { scalingImageBytes: expandedImageBytes } = await getScalingImageBytes(zoom.level)
+    const {
+      scalingImageBytes
+    } = getScalingImageBytes({
+      imageBytes: UICanvasImageBytes,
+      canvasWidth: UICanvasWidth,
+      canvasHeight: UICanvasHeight,
+      scaling: zoom.level
+    })
 
-      if (!(expandedImageBytes instanceof Uint8Array)) {
-        setZoom(prevZoom.current)
+    if (!(scalingImageBytes instanceof Uint8Array)) {
+      setZoom(prevZoom.current)
 
-        if (expandedImageBytes === undefined) {
-          dispatchWarning('Unexpected error when zoom in on the image.')
-          return
-        }
-
-        dispatchWarning('The image is too large to zoom in further.')
+      if (scalingImageBytes === undefined) {
+        dispatchWarning('Unexpected error when zoom in on the image.')
         return
       }
 
-      prevZoom.current = zoom
+      dispatchWarning('The image is too large to zoom in further.')
+      return
+    }
 
-      const { level, pointerPosition } = zoom
+    const restOfProps = getRestOfPropsOnClippedImageBytes({
+      zoom,
+      UICanvasWidth,
+      UICanvasHeight
+    })
 
-      const expandedWidth = UICanvasWidth * level
-      const expandedHeight = UICanvasHeight * level
+    const clippedImageBytes = getClippedImageBytes({
+      imageBytesToCut: scalingImageBytes,
+      ...restOfProps
+    })
 
-      const restOfProps = getRestOfPropsOnClippedImageBytes({
-        zoomLevel: zoom.level,
-        widthOfImgToCut: expandedWidth,
-        heightOfImgToCut: expandedHeight,
-        UICanvasWidth,
-        UICanvasHeight,
-        pointerPosition
-      })
+    const imageData = UICanvasContext2D.current.createImageData(UICanvasWidth, UICanvasHeight)
+    imageData.data.set(clippedImageBytes)
+    UICanvasContext2D.current.putImageData(imageData, 0, 0)
 
-      const clippedImageBytes = await getClippedImageBytes({
-        imageBytesToCut: expandedImageBytes,
-        ...restOfProps
-      })
-
-      const { imageBytes, dimensions } = clippedImageBytes[0]
-
-      const imageData = UICanvasContext2D.current!.createImageData(dimensions.width, dimensions.height)
-      imageData.data.set(imageBytes)
-      UICanvasContext2D.current!.putImageData(imageData, 0, 0)
-    })()
-  }, [getScalingImageBytes, zoom, UICanvas, UICanvasContext2D])
+    prevZoom.current = zoom
+  }, [zoom, UICanvasImageBytes, UICanvas, UICanvasContext2D])
 
   return { zoom, zoomIn, zoomOut, restoreZoom }
 }
