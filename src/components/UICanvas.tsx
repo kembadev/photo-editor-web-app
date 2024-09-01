@@ -107,6 +107,7 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
           >
             <MinusIcon />
           </div>
+          <span>{Math.floor(zoom.level * 100)}%</span>
         </section>
       </div>
     </>

@@ -13,19 +13,19 @@
 }
 
 .UICanvas_container .zoom-controls_container {
-  width: 70px;
   line-height: 1.2em;
   display: flex;
   flex-direction: row;
+  align-items: center;
   border-radius: 2px;
-  font-size: 1.3em;
+  font-size: 0.95em;
   position: absolute;
   top: 0;
   left: 0;
   z-index: 200;
 
   div {
-    flex: 1;
+    width: 35px;
     display: grid;
     place-content: center;
   }
@@ -40,5 +40,9 @@
 
   svg {
     width: 100%;
+  }
+
+  span {
+    margin-left: 5px;
   }
 }

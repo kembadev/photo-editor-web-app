@@ -73,7 +73,7 @@ export function FormSettings ({ closeDownloadModal }: FormSettingsProps) {
               name='name'
               id={filenameInputId}
               aria-errormessage={filenameRequiredId}
-              placeholder='viaje_egipto'
+              placeholder='Filename'
               title={filename}
               value={filename}
               onChange={handleFilenameOnChange}
@@ -95,7 +95,6 @@ export function FormSettings ({ closeDownloadModal }: FormSettingsProps) {
           </div>
           {filenameError && <em id={filenameRequiredId}>{filenameError}</em>}
         </section>
-        {/* <span style={{ textAlign: 'right' }}>Tamaño final: <em>1</em></span> */}
       </header>
 
       <div

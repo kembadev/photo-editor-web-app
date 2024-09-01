@@ -8,4 +8,8 @@
   padding: 25px;
   overflow: hidden;
   position: relative;
+
+  * {
+    user-select: none;
+  }
 }
