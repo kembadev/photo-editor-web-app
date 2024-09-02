@@ -1,7 +1,9 @@
+import { type Message } from '../dedicated-workers/download.ts'
+
 import { FormEvent, useCallback, useState } from 'react'
 import { useOffscreenCanvas } from './useOffscreenCanvas.ts'
 
-import { getScalingImageBytes } from '../methods/getScalingImageBytes.ts'
+import { getImageBytes } from '../methods/getImageBytes.ts'
 import { getInternetConnectionStatus } from '../utils/NetworkStatus.ts'
 
 import DownloadWorker from '../dedicated-workers/download.ts?worker'
@@ -16,46 +18,19 @@ export function useDownloadImage () {
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadError, setDownloadError] = useState<string | null>(null)
 
-  const { offscreenCanvas, offscreenCanvasImageBytes } = useOffscreenCanvas()
+  const { offscreenCanvas, offscreenCanvasContext2D } = useOffscreenCanvas()
 
   const handleOnSubmit = useCallback((e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    if (isDownloading) return
+    if (isDownloading ||
+      !offscreenCanvas.current ||
+      !offscreenCanvasContext2D.current) return
 
     const form = e.target as HTMLFormElement
 
     const formObject = Object.fromEntries(new FormData(form)) as DownloadImageFormConfig
     const { scale, name, format } = formObject
-
-    if (!scale || !name || !format) {
-      return name === ''
-        ? console.error('Filename required.')
-        : console.error('Unexpected error.')
-    }
-
-    setIsDownloading(true)
-
-    const { width: offscreenCanvasWidth, height: offscreenCanvasHeight } = offscreenCanvas.current!
-
-    const {
-      scalingImageBytes,
-      scalingWidth,
-      scalingHeight
-    } = getScalingImageBytes({
-      imageBytes: offscreenCanvasImageBytes,
-      canvasWidth: offscreenCanvasWidth,
-      canvasHeight: offscreenCanvasHeight,
-      scaling: scale
-    })
-
-    console.info('Downloading image...')
-
-    const offscreen = new OffscreenCanvas(scalingWidth, scalingHeight)
-
-    const worker = new DownloadWorker({
-      name: 'DOWNLOAD_WORKER'
-    })
 
     const dispatchDownloadError = (msg: string) => {
       setDownloadError(msg)
@@ -65,25 +40,48 @@ export function useDownloadImage () {
       }, 5000)
     }
 
-    if (!(scalingImageBytes instanceof Uint8Array)) {
-      worker.terminate()
-      setIsDownloading(false)
+    if (!scale || !name || !format) {
+      if (name === '') return console.error('Filename required.')
 
-      if (scalingImageBytes === undefined) {
-        dispatchDownloadError('Something went wrong. If the problem persists, it may be due to security reasons.')
-      } else {
-        dispatchDownloadError('The image is too large to download.')
-      }
-
+      dispatchDownloadError('Unexpected error.')
       return
     }
 
-    const buffer = scalingImageBytes.buffer
-    const MIMEType = `image/${format}`
+    setIsDownloading(true)
 
-    worker.postMessage({ offscreen, buffer, MIMEType }, [offscreen, buffer])
+    console.info('Downloading image...')
 
-    worker.onmessage = (e: MessageEvent<Blob>) => {
+    const { width: offscreenCanvasWidth, height: offscreenCanvasHeight } = offscreenCanvas.current
+
+    const imageBytes = getImageBytes({
+      ctx: offscreenCanvasContext2D.current,
+      canvasWidth: offscreenCanvasWidth,
+      canvasHeight: offscreenCanvasHeight
+    }) as Uint8Array
+
+    const buffer = imageBytes.buffer
+
+    const message: Message = {
+      buffer,
+      canvasWidth: offscreenCanvasWidth,
+      canvasHeight: offscreenCanvasHeight,
+      MIMEType: `image/${format}`,
+      scaling: scale
+    }
+
+    const worker = new DownloadWorker({ name: 'DOWNLOAD_WORKER' })
+
+    worker.postMessage(message, [buffer])
+
+    worker.onmessage = (e: MessageEvent<Blob | string>) => {
+      if (!(e.data instanceof Blob)) {
+        worker.terminate()
+        setIsDownloading(false)
+
+        dispatchDownloadError(e.data)
+        return
+      }
+
       const blob = e.data
       const blobURL = URL.createObjectURL(blob)
 
@@ -109,10 +107,12 @@ export function useDownloadImage () {
             return
           }
 
+          dispatchDownloadError('Download failed.')
+
           console.error('Download failed.')
         })
     }
-  }, [isDownloading, offscreenCanvas, offscreenCanvasImageBytes])
+  }, [isDownloading, offscreenCanvas, offscreenCanvasContext2D])
 
   return { handleOnSubmit, isDownloading, downloadError }
 }

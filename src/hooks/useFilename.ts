@@ -20,8 +20,6 @@ export function useFilename () {
 
     if (newFilename.length === 0) return setFilenameError('**Filename required**')
 
-    if (newFilename.includes('.')) return setFilenameError('**Putting an extension in the filename is not recommended**')
-
     setFilenameError(null)
   }
 

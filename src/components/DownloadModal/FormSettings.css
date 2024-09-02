@@ -1,3 +1,7 @@
+:root {
+  --text-max-width: 260px
+}
+
 .download-modal__form {
   display: flex;
   flex-direction: column;
@@ -102,7 +106,9 @@
   }
 
   em {
-    font-size: 0.75em;
+    display: inline-block;
+    max-width: var(--text-max-width);
+    font-size: 0.65rem;
     font-weight: bold;
   }
 }
@@ -113,7 +119,9 @@
   gap: 10px;
 
   strong {
-    font-size: 0.75em;
+    max-width: var(--text-max-width);
+    font-size: 0.65rem;
+    align-self: center;
   }
 
   button {

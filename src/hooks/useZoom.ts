@@ -5,11 +5,12 @@ import { useUICanvas } from './useUICanvas.ts'
 
 import { dispatchWarning } from '../methods/dispatchWarning.ts'
 import { getTouchesPosition } from '../methods/getTouchesPosition.ts'
-import { getScalingImageBytes } from '../methods/getScalingImageBytes.ts'
+import { getScalingImageBytes } from '../methods/getScaledImage.ts'
 import { getClippedImageBytes } from '../methods/getClippedImageBytes.ts'
 import { getRestOfPropsOnClippedImageBytes } from '../helpers/clippedImageBytesProps.ts'
 
 export type Position = { x: number; y: number }
+
 type PointerPosition = Position | 'center'
 
 export interface Zoom {

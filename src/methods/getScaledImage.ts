@@ -9,11 +9,11 @@ interface ImageScaler {
   scaling: number
 }
 
-export function getScalingImageBytes ({ imageBytes, canvasWidth, canvasHeight, scaling }: ImageScaler) {
+export function getScalingCanvas ({ imageBytes, canvasWidth, canvasHeight, scaling }: ImageScaler) {
   const scalingWidth = canvasWidth * scaling
   const scalingHeight = canvasHeight * scaling
 
-  const { ctx } = getCanvas({
+  const { canvas, ctx } = getCanvas({
     imageBytes,
     canvasWidth,
     canvasHeight
@@ -24,15 +24,22 @@ export function getScalingImageBytes ({ imageBytes, canvasWidth, canvasHeight, s
     ctx.scale(scaling, scaling)
   })
 
+  return { canvas, ctx, scalingWidth, scalingHeight }
+}
+
+export function getScalingImageBytes ({ imageBytes, canvasWidth, canvasHeight, scaling }: ImageScaler) {
+  const { ctx, scalingWidth, scalingHeight } = getScalingCanvas({
+    imageBytes,
+    canvasWidth,
+    canvasHeight,
+    scaling
+  })
+
   const scalingImageBytes = getImageBytes({
     ctx,
     canvasWidth: scalingWidth,
     canvasHeight: scalingHeight
   })
 
-  return {
-    scalingImageBytes,
-    scalingWidth,
-    scalingHeight
-  }
+  return { scalingImageBytes, scalingWidth, scalingHeight }
 }
