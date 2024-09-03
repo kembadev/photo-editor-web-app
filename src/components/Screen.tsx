@@ -38,7 +38,7 @@ export function Screen () {
 
   return (
     <>
-      {warning && <Warning message={warning} />}
+      {warning && <Warning message={warning.message} color={warning.color} />}
       {
         providedImgFile
           ? (

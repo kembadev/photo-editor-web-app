@@ -1,13 +1,7 @@
 import './Loading.css'
 
-import { CSSProperties } from 'react'
-
 interface LoadingProps {
   color?: string
-}
-
-interface CustomCSSProperties extends CSSProperties {
-  '--color'?: string;
 }
 
 export default function Loading ({ color = '#eee' }: LoadingProps) {
@@ -15,8 +9,9 @@ export default function Loading ({ color = '#eee' }: LoadingProps) {
     <div
       className='spinner-loading'
       style={{
-        '--color': color
-      } as CustomCSSProperties}
+        border: `5px solid ${color}`,
+        borderLeftColor: 'transparent'
+      }}
     />
   )
 }

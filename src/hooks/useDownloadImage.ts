@@ -98,7 +98,6 @@ export function useDownloadImage () {
 
     worker.onerror = () => {
       worker.terminate()
-      setIsDownloading(false)
 
       getInternetConnectionStatus()
         .then(ok => {
@@ -111,6 +110,7 @@ export function useDownloadImage () {
 
           console.error('Download failed.')
         })
+        .finally(() => setIsDownloading(false))
     }
   }, [isDownloading, offscreenCanvas, offscreenCanvasContext2D])
 

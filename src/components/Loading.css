@@ -5,8 +5,6 @@
   width: var(--length);
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 5px solid var(--color);
-  border-left-color: transparent;
   position: absolute;
   top: 50%;
   left: 50%;
