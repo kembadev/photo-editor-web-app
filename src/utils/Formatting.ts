@@ -1,11 +1,11 @@
-interface CollapseListType {
+interface CollapseListProps {
   list: string[];
   type?: 'and' | 'or' | 'join';
   locales?: Intl.LocalesArgument
 }
 
 export class Formatting {
-  static CollapseList ({ list, type = 'and', locales = 'en' }: CollapseListType): string {
+  public static collapseList ({ list, type = 'and', locales = 'en' }: CollapseListProps) {
     const formattingType: Intl.ListFormatType = type === 'and'
       ? 'conjunction'
       : type === 'or'
@@ -18,13 +18,5 @@ export class Formatting {
     })
 
     return formatter.format(list)
-  }
-
-  static ParseString (text: string) {
-    const $text = text.trim()
-
-    return $text.endsWith('.')
-      ? $text
-      : $text + '.'
   }
 }

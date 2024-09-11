@@ -2,7 +2,7 @@ import { DIRECTION } from '../consts.ts'
 
 import { getImageBytes } from './getImageBytes.ts'
 
-import { getCanvas } from '../helpers/getCanvas.ts'
+import { getCanvas } from '../common/helpers/getCanvas.ts'
 
 interface RotatedImageBytes {
   imageBytes: Uint8Array;

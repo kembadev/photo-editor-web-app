@@ -1,26 +1,30 @@
 import { Formatting } from '../utils/Formatting.ts'
 
 export class ImageError extends Error {
-  readonly name: string
-
-  constructor (msg: string) {
-    super(msg)
+  constructor (message: string) {
+    super(message)
     this.name = 'ImageError'
   }
+}
 
-  static ThrowInvalidEncoding (acceptedEncodingList: string[], invalidationMsg?: string): never {
-    let parsedInvalidationMsg: string | undefined
+export class ImageFormatError extends ImageError {
+  constructor (message: string) {
+    super(message)
+    this.name = 'ImageFormatError'
+  }
 
-    if (invalidationMsg) {
-      parsedInvalidationMsg = Formatting.ParseString(invalidationMsg)
-    }
+  public static throwInvalidEncoding (invalidationMessage: string, acceptedEncodingList: string[]) {
+    throw new ImageFormatError(`
+      ${invalidationMessage}. Accepted encoding formats: ${
+        Formatting.collapseList({ list: acceptedEncodingList })
+      }
+    `)
+  }
+}
 
-    const formatted = Formatting.CollapseList({
-      list: acceptedEncodingList
-    })
-
-    throw new ImageError(
-      `${parsedInvalidationMsg || ''} Accepted encoding formats: ${formatted}.`
-    )
+export class ImageMemoryError extends ImageError {
+  constructor (message: string) {
+    super(message)
+    this.name = 'ImageMemoryError'
   }
 }

@@ -2,9 +2,9 @@ import './Crop.css'
 
 import { DIRECTION } from '../../../consts.ts'
 
-import { useControls } from '../../../hooks/useControls.ts'
+import { useControls } from '../../../hooks/ControlPanel/useControls.ts'
 
-import { RotateLeftIcon, RotateRightIcon, InvertIcon } from '../../Icons.tsx'
+import { RotateLeftIcon, RotateRightIcon, InvertIcon } from '../../../common/components/Icons.tsx'
 
 export function Crop () {
   const { invertCanvas, rotateCanvas } = useControls()

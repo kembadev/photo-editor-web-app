@@ -1,27 +1,48 @@
-import { type DIRECTION } from '../consts.ts'
+import { DIRECTION } from '../consts.ts'
 
-import { lazyLoading, suspenseLoading } from '../utils/LazyLoading.ts'
+import { lazyLoading, suspenseLoading } from '../common/helpers/LazyLoading.ts'
+import { getDecompressedImageBytes } from '../lib/compress.ts'
 
 export const initialImageBytes = new Uint8Array()
 
 export enum IMAGE_BYTES_ACTION_TYPES {
-  // RESET: 'RESET',
+  // RESET = 'RESET',
+  RESTORE = 'RESTORE',
   INVERT = 'INVERT',
   ROTATE = 'ROTATE'
-  // CROP: 'CROP'
+  // CROP = 'CROP'
 }
 
-export type PayloadInvert = { canvasWidth: number }
-export type PayloadRotate = {
-  canvasWidth: number,
-  canvasHeight: number,
-  direction: DIRECTION
+export interface CanvasDimensions {
+  canvasWidth: number;
+  canvasHeight: number
 }
 
-export type ReducerAction = { type: IMAGE_BYTES_ACTION_TYPES.INVERT, payload: PayloadInvert } |
-  { type: IMAGE_BYTES_ACTION_TYPES.ROTATE, payload: PayloadRotate }
+type ActionRestore = {
+  type: IMAGE_BYTES_ACTION_TYPES.RESTORE,
+  payload: {
+    compressedImageBytes: Uint8Array,
+    indexOfDesiredLog: number
+  }
+}
 
-type GetUpdatedImageBytes = (state: Uint8Array, action: ReducerAction) => Promise<Uint8Array>
+type ActionRotate = {
+  type: IMAGE_BYTES_ACTION_TYPES.ROTATE;
+  payload: { direction: DIRECTION }
+}
+
+type ActionInvert = { type: IMAGE_BYTES_ACTION_TYPES.INVERT }
+
+export type ReducerAction = ActionRestore | ActionRotate | ActionInvert
+
+interface GetUpdatedImageBytesProps {
+  state: Uint8Array;
+  action: ReducerAction;
+  canvasDimensions: CanvasDimensions
+}
+type GetUpdatedImageBytes = (
+  { state, action, canvasDimensions }: GetUpdatedImageBytesProps
+) => Promise<Uint8Array>
 
 const lazyGetInvertedImageBytes = lazyLoading(async () => {
   const { getInvertedImageBytes } = await import('../methods/getInvertedImageBytes.ts')
@@ -33,16 +54,21 @@ const lazyGetRotatedImageBytes = lazyLoading(async () => {
   return getRotatedImageBytes
 })
 
-const imageBytes: GetUpdatedImageBytes = async (state, action) => {
+const imageBytes: GetUpdatedImageBytes = async ({ state, action, canvasDimensions }) => {
   const { type } = action
+  const { canvasWidth, canvasHeight } = canvasDimensions
+
+  if (type === IMAGE_BYTES_ACTION_TYPES.RESTORE) {
+    return getDecompressedImageBytes(action.payload.compressedImageBytes)
+  }
 
   if (type === IMAGE_BYTES_ACTION_TYPES.INVERT) {
     const getInvertedImageBytes = await suspenseLoading(lazyGetInvertedImageBytes)
-    return getInvertedImageBytes({ imageBytes: state, canvasWidth: action.payload.canvasWidth })
+    return getInvertedImageBytes({ imageBytes: state, canvasWidth })
   }
 
   if (type === IMAGE_BYTES_ACTION_TYPES.ROTATE) {
-    const { canvasWidth, canvasHeight, direction } = action.payload
+    const { direction } = action.payload
 
     const getRotatedImageBytes = await suspenseLoading(lazyGetRotatedImageBytes)
     return getRotatedImageBytes({ imageBytes: state, canvasWidth, canvasHeight, direction })
@@ -52,11 +78,10 @@ const imageBytes: GetUpdatedImageBytes = async (state, action) => {
 }
 
 export async function getUpdatedImageBytes (
-  state: Uint8Array,
-  action: ReducerAction
+  { state, action, canvasDimensions }: GetUpdatedImageBytesProps
 ): Promise<Uint8Array | Error> {
   try {
-    return await imageBytes(state, action)
+    return await imageBytes({ state, action, canvasDimensions })
   } catch (err) {
     return err as Error
   }

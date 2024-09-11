@@ -24,3 +24,8 @@ export const ZOOM_LIMITS = {
   MIN: 1,
   MAX: 5
 }
+
+export enum RESTORE {
+  UNDO = 'UNDO',
+  REDO = 'REDO'
+}

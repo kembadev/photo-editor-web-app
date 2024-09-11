@@ -1,6 +1,6 @@
 import { getImageBytes } from './getImageBytes.ts'
 
-import { getCanvas } from '../helpers/getCanvas.ts'
+import { getCanvas } from '../common/helpers/getCanvas.ts'
 
 interface ImageScaler {
   imageBytes: Uint8Array;
@@ -9,7 +9,7 @@ interface ImageScaler {
   scaling: number
 }
 
-export function getScalingCanvas ({ imageBytes, canvasWidth, canvasHeight, scaling }: ImageScaler) {
+export function getScaledCanvas ({ imageBytes, canvasWidth, canvasHeight, scaling }: ImageScaler) {
   const scalingWidth = canvasWidth * scaling
   const scalingHeight = canvasHeight * scaling
 
@@ -21,6 +21,7 @@ export function getScalingCanvas ({ imageBytes, canvasWidth, canvasHeight, scali
     canvas.width = scalingWidth
     canvas.height = scalingHeight
 
+    ctx.imageSmoothingQuality = 'high'
     ctx.scale(scaling, scaling)
   })
 
@@ -28,7 +29,7 @@ export function getScalingCanvas ({ imageBytes, canvasWidth, canvasHeight, scali
 }
 
 export function getScalingImageBytes ({ imageBytes, canvasWidth, canvasHeight, scaling }: ImageScaler) {
-  const { ctx, scalingWidth, scalingHeight } = getScalingCanvas({
+  const { ctx, scalingWidth, scalingHeight } = getScaledCanvas({
     imageBytes,
     canvasWidth,
     canvasHeight,

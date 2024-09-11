@@ -1,6 +1,6 @@
 import { getImageBytes } from './getImageBytes.ts'
 
-import { getCanvas } from '../helpers/getCanvas.ts'
+import { getCanvas } from '../common/helpers/getCanvas.ts'
 
 interface ClippedImageBytes {
   imageBytesToCut: Uint8Array;

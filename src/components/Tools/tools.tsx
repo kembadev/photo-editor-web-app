@@ -11,7 +11,7 @@ export const AVAILABLE_TOOLS = [
   },
   {
     name: 'Markup',
-    Component: () => <button>Texto</button>
+    Component: () => <button>Text</button>
   }
 ] as const
 

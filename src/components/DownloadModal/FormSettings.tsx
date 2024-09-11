@@ -1,12 +1,12 @@
 import './FormSettings.css'
 
 import { ChangeEvent, useId, useMemo, useState } from 'react'
-import { useOffscreenCanvas } from '../../hooks/useOffscreenCanvas.ts'
-import { useFilename, AVAILABLE_IMAGE_FORMATS } from '../../hooks/useFilename.ts'
-import { useDownloadImage } from '../../hooks/useDownloadImage.ts'
+import { useOffscreenCanvas } from '../../hooks/Canvas/useOffscreenCanvas.ts'
+import { useFilename, AVAILABLE_IMAGE_FORMATS } from '../../hooks/DownloadModal/useFilename.ts'
+import { useDownloadImage } from '../../hooks/DownloadModal/useDownloadImage.ts'
 
-import Loading from '../Loading.tsx'
-import { XIcon } from '../Icons.tsx'
+import Loading from '../../common/components/Loading.tsx'
+import { XIcon } from '../../common/components/Icons.tsx'
 
 interface FormSettingsProps {
   closeDownloadModal: () => void

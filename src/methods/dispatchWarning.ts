@@ -1,4 +1,4 @@
-import { type Warning } from '../hooks/useWarning.ts'
+import { type Warning } from '../hooks/Screen/useWarning.ts'
 
 import { EVENTS } from '../consts.ts'
 

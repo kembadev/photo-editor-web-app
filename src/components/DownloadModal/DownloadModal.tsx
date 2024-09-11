@@ -1,10 +1,10 @@
 import './DownloadModal.css'
 
 import { forwardRef, useImperativeHandle, useRef } from 'react'
-import { useProcessesChecker } from '../../hooks/useProcessesChecker.ts'
+import { useProcessesChecker } from '../../hooks/DownloadModal/useProcessesChecker.ts'
 
 import { FormSettings } from './FormSettings.tsx'
-import { ProgressBar } from './ProgressBar.tsx'
+import { Progress } from './Progress.tsx'
 
 export interface DownloadModalHandle {
   showModal: () => void
@@ -31,7 +31,7 @@ const DownloadModal = forwardRef<DownloadModalHandle>((_, ref) => {
       {
         taskRunningChecker.isQueueClear
           ? <FormSettings closeDownloadModal={closeDownloadModal} />
-          : <ProgressBar closeDownloadModal={closeDownloadModal} />
+          : <Progress closeDownloadModal={closeDownloadModal} />
       }
     </dialog>
   )
