@@ -1,21 +1,23 @@
-import { type UploadFileErrorMessages } from '../../components/Upload/UploadImage.tsx'
-
 import { FormEvent, DragEvent, useRef, useState } from 'react'
+import { useErrorMessage } from '../../common/hooks/useErrorMessage.ts'
 import { useImageFile } from '../../common/hooks/useImageFile.ts'
 
 import { Result } from '../../utils/Result.ts'
-
-interface UseUpload {
-  UPLOAD_FILE_ERROR_MESSAGES: UploadFileErrorMessages
-}
 
 interface UploadImageForm {
   imageFile?: File
 }
 
-export function useUpload ({ UPLOAD_FILE_ERROR_MESSAGES }: UseUpload) {
+const UPLOAD_FILE_ERROR_MESSAGES = {
+  UNEXPECTED_ERROR: 'Unexpected error has occurred. Try again.',
+  MULTIPLE_FILES: 'Multiple files not allowed.',
+  INCORRECT_TYPE: (type: string) => `File must be of type image. Received: ${type}.`,
+  FILE_NOT_PROVIDED: 'Only files are supported.'
+}
+
+export function useUpload () {
+  const { errorMessage, updateErrorMessage } = useErrorMessage()
   const [isOnDragOver, setIsOnDragOver] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const { setProvidedImgFile } = useImageFile()
 
@@ -40,7 +42,7 @@ export function useUpload ({ UPLOAD_FILE_ERROR_MESSAGES }: UseUpload) {
     } = UPLOAD_FILE_ERROR_MESSAGES
 
     if (imageFile === undefined) {
-      return setErrorMessage(UNEXPECTED_ERROR)
+      return updateErrorMessage(UNEXPECTED_ERROR)
     }
 
     const usableImageFile: File = imageFile
@@ -57,7 +59,7 @@ export function useUpload ({ UPLOAD_FILE_ERROR_MESSAGES }: UseUpload) {
 
     if (result.success) return setProvidedImgFile(result.value)
 
-    setErrorMessage(result.error)
+    updateErrorMessage(result.error)
   }
 
   const handleDrop = (e: DragEvent<HTMLFormElement>) => {
@@ -68,10 +70,10 @@ export function useUpload ({ UPLOAD_FILE_ERROR_MESSAGES }: UseUpload) {
 
     const items = e.dataTransfer.items
 
-    if (items.length > 1) return setErrorMessage(MULTIPLE_FILES)
+    if (items.length > 1) return updateErrorMessage(MULTIPLE_FILES)
 
     if (items[0].kind !== 'file') {
-      return setErrorMessage(FILE_NOT_PROVIDED)
+      return updateErrorMessage(FILE_NOT_PROVIDED)
     }
 
     const file = items[0].getAsFile()

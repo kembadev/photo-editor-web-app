@@ -1,6 +1,7 @@
 import { type Message } from '../../dedicated-workers/download.ts'
 
 import { FormEvent, useCallback, useState } from 'react'
+import { useErrorMessage } from '../../common/hooks/useErrorMessage.ts'
 import { useOffscreenCanvas } from '../Canvas/useOffscreenCanvas.ts'
 
 import { getImageBytes } from '../../methods/getImageBytes.ts'
@@ -16,7 +17,10 @@ interface DownloadImageFormConfig {
 
 export function useDownloadImage () {
   const [isDownloading, setIsDownloading] = useState(false)
-  const [downloadError, setDownloadError] = useState<string | null>(null)
+  const {
+    errorMessage: downloadError,
+    updateErrorMessage: updateDownloadError
+  } = useErrorMessage()
 
   const { offscreenCanvas, offscreenCanvasContext2D } = useOffscreenCanvas()
 
@@ -33,10 +37,10 @@ export function useDownloadImage () {
     const { scale, name, format } = formObject
 
     const dispatchDownloadError = (msg: string) => {
-      setDownloadError(msg)
+      updateDownloadError(msg)
 
       setTimeout(() => {
-        setDownloadError(null)
+        updateDownloadError(null)
       }, 5000)
     }
 
@@ -114,7 +118,7 @@ export function useDownloadImage () {
         })
         .finally(() => setIsDownloading(false))
     }
-  }, [isDownloading, offscreenCanvas, offscreenCanvasContext2D])
+  }, [isDownloading, offscreenCanvas, offscreenCanvasContext2D, updateDownloadError])
 
   return { handleOnSubmit, isDownloading, downloadError }
 }

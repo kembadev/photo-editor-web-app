@@ -4,15 +4,6 @@ import { useUpload } from '../../hooks/Upload/useUpload.ts'
 
 import { FolderIcon } from '../../common/components/Icons.tsx'
 
-const UPLOAD_FILE_ERROR_MESSAGES = {
-  UNEXPECTED_ERROR: 'Unexpected error has occurred. Try again.',
-  MULTIPLE_FILES: 'Multiple files not allowed.',
-  INCORRECT_TYPE: (type: string) => `File must be of type image. Received: ${type}.`,
-  FILE_NOT_PROVIDED: 'Only files are supported.'
-}
-
-export type UploadFileErrorMessages = typeof UPLOAD_FILE_ERROR_MESSAGES
-
 export function UploadImage () {
   const {
     form,
@@ -24,12 +15,13 @@ export function UploadImage () {
     handleOnDragOver,
     handleOnDragLeave,
     handleDrop
-  } = useUpload({ UPLOAD_FILE_ERROR_MESSAGES })
+  } = useUpload()
 
   return (
     <header className='upload-image'>
       <h1>Basic photo editor</h1>
       <form
+        aria-label='Upload image to edit'
         className="form-image-input"
         ref={form}
         onSubmit={handleSubmit}
@@ -59,7 +51,7 @@ export function UploadImage () {
           </label>
         </div>
       </form>
-      {errorMessage && <p>{errorMessage}</p>}
+      {errorMessage && <p role='alert'>{errorMessage}</p>}
     </header>
   )
 }

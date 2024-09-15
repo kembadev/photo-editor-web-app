@@ -39,6 +39,7 @@ export function FormSettings ({ closeDownloadModal }: FormSettingsProps) {
 
     return { width, height }
   }, [desiredScale, offscreenCanvas, offscreenCanvasImageBytes])
+
   return (
     <>
       {isDownloading && <Loading color='#8dcbf2' />}

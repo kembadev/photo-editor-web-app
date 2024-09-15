@@ -101,9 +101,21 @@ function getTaskProcessor (lastImageBytesHandler: LastImageBytesHandler) {
         const { type } = action
         const tock = performance.now()
 
+        let actionPayload
+
+        if ('payload' in action) {
+          actionPayload = action.payload as Record<string, unknown>
+
+          for (const key in actionPayload) {
+            if (actionPayload[key] instanceof Uint8Array) {
+              actionPayload[key] = 'Uint8Array'
+            }
+          }
+        }
+
         console.info(`
           Task number ${++itemIndex}. Action type: ${type}.
-          ${'payload' in action && JSON.stringify({ payload: action.payload }, null, 2).slice(0, 60)}
+          ${actionPayload ? JSON.stringify({ payload: actionPayload }, null, 2) : ''}
           Processing time: ${tock - tick}ms.
           Bytelength of new offscreenCanvasImageBytes: ${newOffscreenCanvasImageBytes.byteLength}.
         `)

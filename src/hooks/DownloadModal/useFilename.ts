@@ -1,6 +1,7 @@
 import { CANVAS_ACCEPTED_MIME_TYPES } from '../../consts.ts'
 
 import { ChangeEvent, useEffect, useMemo, useState } from 'react'
+import { useErrorMessage } from '../../common/hooks/useErrorMessage.ts'
 import { useImageFile } from '../../common/hooks/useImageFile.ts'
 
 export const AVAILABLE_IMAGE_FORMATS = CANVAS_ACCEPTED_MIME_TYPES.map(
@@ -10,7 +11,10 @@ const jpegRegExp = /jpe?g/i
 
 export function useFilename () {
   const [filename, setFilename] = useState('')
-  const [filenameError, setFilenameError] = useState<string | null>(null)
+  const {
+    errorMessage: filenameError,
+    updateErrorMessage: updateFileNameError
+  } = useErrorMessage()
 
   const { providedImgFile } = useImageFile()
 
@@ -18,9 +22,9 @@ export function useFilename () {
     const newFilename = e.target.value
     setFilename(newFilename)
 
-    if (newFilename.length === 0) return setFilenameError('**Filename required**')
+    if (newFilename.length === 0) return updateFileNameError('**Filename required**')
 
-    setFilenameError(null)
+    updateFileNameError(null)
   }
 
   useEffect(() => {
