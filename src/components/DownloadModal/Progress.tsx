@@ -1,7 +1,7 @@
 import './Progress.css'
 
 import { CSSProperties, useEffect, useMemo, useRef } from 'react'
-import { useProcessesChecker } from '../../hooks/DownloadModal/useProcessesChecker.ts'
+import { useProcessesChecker } from '../../common/hooks/useProcessesChecker.ts'
 
 interface ProgressBarProps {
   closeDownloadModal: () => void
@@ -14,21 +14,30 @@ interface CustomCSSProperties extends CSSProperties {
 export function Progress ({ closeDownloadModal }: ProgressBarProps) {
   const { taskRunningChecker } = useProcessesChecker()
 
-  const prevProcessesRunning = useRef(0)
+  const maxNumberOfProcessesRunning = useRef(0)
 
   useEffect(() => {
     const { processesRunning } = taskRunningChecker
 
-    if (processesRunning > prevProcessesRunning.current) {
-      prevProcessesRunning.current = processesRunning
+    if (maxNumberOfProcessesRunning.current < processesRunning) {
+      maxNumberOfProcessesRunning.current = processesRunning
     }
   }, [taskRunningChecker])
 
   const progress = useMemo(() => {
-    const difference = taskRunningChecker.processesRunning / prevProcessesRunning.current
+    const max = maxNumberOfProcessesRunning.current
+    const { processesRunning } = taskRunningChecker
 
-    return 1 - (difference > 1 ? 1 : difference)
-  }, [taskRunningChecker, prevProcessesRunning])
+    const quotient = processesRunning / max
+
+    if (isNaN(quotient)) return 0.5
+
+    const difference = 1 - quotient
+
+    if (quotient === Infinity || difference < 0) return 0
+
+    return difference
+  }, [taskRunningChecker, maxNumberOfProcessesRunning])
 
   return (
     <div className='download-modal__progressive-bar'>

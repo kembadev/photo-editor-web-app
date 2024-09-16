@@ -29,6 +29,12 @@
 
   }
 
+  div:has(.config-controls__scale, .download-modal__image-preview) {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   input {
     border: none;
     outline: none;
@@ -39,7 +45,7 @@
 .config-controls__scale {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
 
   article {
     display: flex;
@@ -53,6 +59,7 @@
 
     span {
       width: 70px;
+      line-height: 1.5em;
       text-align: center;
       border: var(--border);
       border-radius: var(--borderRadius);

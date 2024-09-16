@@ -1,0 +1,30 @@
+.download-modal__image-preview {
+  min-height: 100%;
+  display: flex;
+  position: relative;
+
+  &:hover .image-preview-wider {
+    display: flex;
+  }
+}
+
+.download-modal__image-preview .image-preview-wider {
+  display: none;
+  position: absolute;
+  left: calc(100% + 10px);
+  top: calc(50% - 14px);
+  padding: 10px;
+  border-radius: 7px;
+  background-color: var(--dark);
+  border: 1px solid #e3e3e3;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: -14px;
+    top: 7px;
+    border-width: 7px;
+    border-style: solid;
+    border-color: transparent #e3e3e3 transparent transparent;
+  }
+}

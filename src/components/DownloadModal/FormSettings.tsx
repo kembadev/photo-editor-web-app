@@ -6,6 +6,7 @@ import { useFilename, AVAILABLE_IMAGE_FORMATS } from '../../hooks/DownloadModal/
 import { useDownloadImage } from '../../hooks/DownloadModal/useDownloadImage.ts'
 
 import Loading from '../../common/components/Loading.tsx'
+import { ImagePreview } from './ImagePreview.tsx'
 import { XIcon } from '../../common/components/Icons.tsx'
 
 interface FormSettingsProps {
@@ -41,33 +42,36 @@ export function FormSettings ({ closeDownloadModal }: FormSettingsProps) {
   }, [desiredScale, offscreenCanvas, offscreenCanvasImageBytes])
 
   return (
-    <>
+    <div style={{ position: 'relative' }}>
       {isDownloading && <Loading color='#8dcbf2' />}
       <form
         className='download-modal__form'
         onSubmit={handleOnSubmit}
       >
         <header className='config-controls'>
-          <section className='config-controls__scale'>
-            <article>
-              <input
-                type='range'
-                name='scale'
-                min={0.25}
-                max={4}
-                value={desiredScale}
-                step={0.05}
-                onChange={handleScaleOnChange}
-              />
-              <span>{desiredScale}x</span>
-            </article>
-            <p>
-              Resolution:&nbsp;
-              <span title='Image width'>{imageFinalDimensions.width}px</span>
-              &nbsp;<small>x</small>&nbsp;
-              <span title='Image height'>{imageFinalDimensions.height}px</span>
-            </p>
-          </section>
+          <div>
+            <ImagePreview />
+            <section className='config-controls__scale'>
+              <article>
+                <input
+                  type='range'
+                  name='scale'
+                  min={0.25}
+                  max={4}
+                  value={desiredScale}
+                  step={0.05}
+                  onChange={handleScaleOnChange}
+                />
+                <span>{desiredScale}x</span>
+              </article>
+              <p>
+                Resolution:&nbsp;
+                <span title='Image width'>{imageFinalDimensions.width}px</span>
+                &nbsp;<small>x</small>&nbsp;
+                <span title='Image height'>{imageFinalDimensions.height}px</span>
+              </p>
+            </section>
+          </div>
           <section className='config-controls__image-name'>
             <label htmlFor={filenameInputId}>Image name</label>
             <div>
@@ -121,6 +125,6 @@ export function FormSettings ({ closeDownloadModal }: FormSettingsProps) {
           </div>
         </div>
       </form>
-    </>
+    </div>
   )
 }

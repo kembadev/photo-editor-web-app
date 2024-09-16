@@ -1,7 +1,7 @@
 import './DownloadModal.css'
 
 import { forwardRef, useImperativeHandle, useRef } from 'react'
-import { useProcessesChecker } from '../../hooks/DownloadModal/useProcessesChecker.ts'
+import { useProcessesChecker } from '../../common/hooks/useProcessesChecker.ts'
 
 import { FormSettings } from './FormSettings.tsx'
 import { Progress } from './Progress.tsx'

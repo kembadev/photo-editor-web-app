@@ -52,8 +52,6 @@ function getTaskProcessor (lastImageBytesHandler: LastImageBytesHandler) {
   let itemIndex = 0
 
   return (prevImageBytes: Uint8Array) => {
-    dispatchTaskProcessingEvent()
-
     if (queue.getTasksLength() === 0 || isTaskRunning) return
 
     const tick = performance.now()
@@ -144,6 +142,7 @@ export const getTaskGluer: GetTaskGluer = ({ initialImageBytes, lastImageBytesHa
 
   return (task) => {
     queue.enqueue(task)
+    dispatchTaskProcessingEvent()
     processNextTask(initialImageBytes)
   }
 }

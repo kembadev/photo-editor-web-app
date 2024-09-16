@@ -1,4 +1,4 @@
-import { EventListener } from '../../types/types.ts'
+import { type EventListener } from '../../types/types.ts'
 
 import { EVENTS } from '../../consts.ts'
 
