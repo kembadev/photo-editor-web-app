@@ -1,18 +1,18 @@
 import './UICanvas.css'
 
 import { type EventListener } from '../../types/types.ts'
-import { type ClippedImageBytesResponse } from '../../methods/getClippedImageBytes.ts'
 import { type AvailableToolsNames } from '../Tools/tools.tsx'
 
 import { EVENTS, ZOOM_LIMITS } from '../../consts.ts'
 import { IS_DEVELOPMENT } from '../../config.ts'
 
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect } from 'react'
 import { useUICanvas } from '../../hooks/Canvas/useUICanvas.ts'
 import { useOffscreenCanvas } from '../../hooks/Canvas/useOffscreenCanvas.ts'
 import { useZoom } from '../../hooks/Canvas/useZoom.ts'
 
 import { PlusIcon, MinusIcon } from '../../common/components/Icons.tsx'
+import { OverlayCanvas } from './OverlayCanvas.tsx'
 
 const LazyOffscreenCanvasDev = lazy(() => import('./OffscreenCanvasDev.tsx'))
 
@@ -21,10 +21,8 @@ interface CanvasProps {
   toggleTool: (desiredTool: AvailableToolsNames) => void
 }
 
-export type ExpandedImageInformation = ClippedImageBytesResponse[]
-
 export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
-  const { zoom, zoomIn, zoomOut, restoreZoom } = useZoom()
+  const { zoom, zoomIn, zoomOut, restoreZoom } = useZoom({ currentToolSelected })
 
   const {
     UICanvas,
@@ -36,7 +34,23 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
     offscreenCanvasImageBytes
   } = useOffscreenCanvas()
 
-  useEffect(() => {
+  const onToggleTool = useCallback((e: CustomEvent<AvailableToolsNames>) => {
+    const desiredTool = e.detail
+
+    if (currentToolSelected !== 'Crop' && desiredTool === 'Crop') restoreZoom()
+
+    if (currentToolSelected === 'Crop' && desiredTool !== 'Crop') {
+      const doCrop = () => {
+        console.warn('crop exec')
+      }
+
+      doCrop()
+    }
+
+    toggleTool(desiredTool)
+  }, [currentToolSelected, toggleTool, restoreZoom])
+
+  useLayoutEffect(() => {
     if (offscreenCanvasImageBytes.byteLength === 0 ||
       !offscreenCanvas.current ||
       !offscreenCanvasContext2D.current) return
@@ -49,28 +63,12 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
   }, [offscreenCanvasImageBytes, offscreenCanvas, offscreenCanvasContext2D])
 
   useEffect(() => {
-    const onToggleTool = (e: CustomEvent<AvailableToolsNames>) => {
-      const desiredTool = e.detail
-
-      if (currentToolSelected !== 'Crop' && desiredTool === 'Crop') restoreZoom()
-
-      if (currentToolSelected === 'Crop' && desiredTool !== 'Crop') {
-        const doCrop = () => {
-          console.warn('crop exec')
-        }
-
-        doCrop()
-      }
-
-      toggleTool(desiredTool)
-    }
-
     window.addEventListener(EVENTS.TOGGLE_TOOL, onToggleTool as EventListener)
 
     return () => {
       window.removeEventListener(EVENTS.TOGGLE_TOOL, onToggleTool as EventListener)
     }
-  }, [currentToolSelected, restoreZoom, toggleTool])
+  }, [currentToolSelected, restoreZoom, toggleTool, onToggleTool])
 
   return (
     <>
@@ -86,13 +84,23 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
           className='UICanvas'
           ref={UICanvas}
         />
-        <section className='zoom-controls_container'>
+        {currentToolSelected === 'Crop' && <OverlayCanvas />}
+        <section
+          className='zoom-controls_container'
+          style={{
+            pointerEvents: currentToolSelected === 'Crop' ? 'none' : 'auto'
+          }}
+        >
           <div
             title='Zoom In'
             onClick={() => zoomIn()}
             style={{
-              backgroundColor: zoom.level < ZOOM_LIMITS.MAX ? 'var(--btnBackground)' : 'transparent',
-              cursor: zoom.level < ZOOM_LIMITS.MAX ? 'pointer' : 'auto'
+              backgroundColor: zoom.level >= ZOOM_LIMITS.MAX || currentToolSelected === 'Crop'
+                ? 'transparent'
+                : 'var(--btnBackground)',
+              cursor: zoom.level >= ZOOM_LIMITS.MAX || currentToolSelected === 'Crop'
+                ? 'auto'
+                : 'pointer'
             }}
           >
             <PlusIcon />
@@ -101,8 +109,12 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
             title='Zoom Out'
             onClick={() => zoomOut()}
             style={{
-              backgroundColor: zoom.level > ZOOM_LIMITS.MIN ? 'var(--btnBackground)' : 'transparent',
-              cursor: zoom.level > ZOOM_LIMITS.MIN ? 'pointer' : 'auto'
+              backgroundColor: zoom.level <= ZOOM_LIMITS.MIN || currentToolSelected === 'Crop'
+                ? 'transparent'
+                : 'var(--btnBackground)',
+              cursor: zoom.level <= ZOOM_LIMITS.MIN || currentToolSelected === 'Crop'
+                ? 'auto'
+                : 'pointer'
             }}
           >
             <MinusIcon />

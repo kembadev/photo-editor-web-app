@@ -6,7 +6,6 @@
   flex: 1;
 
   .UICanvas {
-    box-shadow: 0 0 2px color-mix(in srgb, var(--darkMain) 75%, var(--contrastColor));
     position: relative;
     z-index: 150;
   }
@@ -22,7 +21,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 200;
+  z-index: 10000;
 
   div {
     width: 35px;

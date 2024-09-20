@@ -1,8 +1,11 @@
 import { type DIRECTION, RESTORE } from '../../consts.ts'
-import { IMAGE_BYTES_ACTION_TYPES } from '../../reducer-like/ImageBytes.ts'
+import { IMAGE_BYTES_ACTION_TYPES, type cropPayload } from '../../reducer-like/ImageBytes.ts'
 
 import { useActionMiddleware } from './useActionMiddleware.ts'
 import { useLogs } from '../../common/hooks/useLogs.ts'
+import { useUICanvas } from '../Canvas/useUICanvas.ts'
+
+import { getImageResize } from '../../methods/getImageResize.ts'
 
 export function useAction () {
   const { setInitialCharge, clearCanvas, actionMiddleware } = useActionMiddleware()
@@ -12,6 +15,8 @@ export function useAction () {
     restoreUI,
     restoreOffscreen
   } = useLogs()
+
+  const { UICanvas, UICanvasContainer } = useUICanvas()
 
   const restoreCanvas = async (restoreType: RESTORE) => {
     const indexOfDesiredLog = await getIndexOfDesiredLog(restoreType)
@@ -60,5 +65,46 @@ export function useAction () {
     })
   }
 
-  return { setInitialCharge, clearCanvas, restoreCanvas, invertCanvas, rotateCanvas }
+  const cropCanvas = (proportions: cropPayload) => {
+    if (Object.values(proportions).some(p => p < 0 || p > 1)) {
+      console.error('When crop, all proportions must be both greater or equal 0 and less or equal 1.')
+
+      return
+    }
+
+    const { proportionOfWidth, proportionOfHeight } = proportions
+
+    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current!
+    const { offsetWidth: containerWidth, offsetHeight: containerHeight } = UICanvasContainer.current!
+
+    const widthOfClippedImage = UICanvasWidth * proportionOfWidth
+    const heightOfClippedImage = UICanvasHeight * proportionOfHeight
+
+    const { scaleX, scaleY } = getImageResize({
+      originalWidth: widthOfClippedImage,
+      originalHeight: heightOfClippedImage,
+      containerWidth,
+      containerHeight
+    })
+
+    actionMiddleware({
+      type: IMAGE_BYTES_ACTION_TYPES.CROP,
+      payload: [{ ...proportions, scaling: (scaleX + scaleY) / 2 }, proportions]
+    }, (canvas) => {
+      if (canvas instanceof OffscreenCanvas) {
+        const { width, height } = canvas
+
+        canvas.width = width * proportionOfWidth
+        canvas.height = height * proportionOfHeight
+
+        return
+      }
+
+      // UICanvas resizing
+      canvas.width = scaleX * widthOfClippedImage
+      canvas.height = scaleY * heightOfClippedImage
+    })
+  }
+
+  return { setInitialCharge, clearCanvas, restoreCanvas, invertCanvas, rotateCanvas, cropCanvas }
 }

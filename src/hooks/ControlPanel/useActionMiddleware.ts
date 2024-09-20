@@ -8,11 +8,13 @@ import { useOffscreenCanvas } from '../Canvas/useOffscreenCanvas.ts'
 import { useLogs } from '../../common/hooks/useLogs.ts'
 import { UICanvasContext } from '../../context/Canvas/UICanvasContext.ts'
 import { OffscreenCanvasContext } from '../../context/Canvas/OffscreenCanvasContext.ts'
+import { useProcessesChecker } from '../../common/hooks/useProcessesChecker.ts'
 
 import { getUpdatedImageBytes, IMAGE_BYTES_ACTION_TYPES, initialImageBytes, type ReducerAction } from '../../reducer-like/ImageBytes.ts'
 
 import { getTaskGluer, type EnqueueTask } from '../../core/actionTaskQueue.ts'
 import { dispatchWarning } from '../../methods/dispatchWarning.ts'
+import { getScalingImageBytes } from '../../methods/getScaledImage.ts'
 import { ContextProviderNotFound } from '../../error-handling/ContextProviderNotFound.ts'
 
 export interface InitialCharge {
@@ -39,6 +41,8 @@ export function useActionMiddleware () {
   const { setOffscreenCanvasImageBytes } = OffscreenContext
 
   const { addUILog, addOffscreenLog } = useLogs()
+
+  const { taskRunningChecker } = useProcessesChecker()
 
   const isFirstOverload = useRef(true)
   const enqueueTask = useRef<EnqueueTask | null>(null)
@@ -79,18 +83,41 @@ export function useActionMiddleware () {
       lastImageBytesHandler: (lastImageBytes, type) => {
         setOffscreenCanvasImageBytes(lastImageBytes)
 
-        const { width, height } = offscreenCanvas.current!
+        const { width: newOffscreenCanvasWidth, height: newOffscreenCanvasHeight } = offscreenCanvas.current!
+        const { width: newUICanvasWidth, height: newUICanvasHeight } = UICanvas.current!
+
+        const scaling = newUICanvasWidth / newOffscreenCanvasWidth
+
+        if (taskRunningChecker.isQueueClear && scaling > 0.25) {
+          // to ensure that the image quality of UICanvas is the highest
+          const { scalingImageBytes } = getScalingImageBytes({
+            imageBytes: lastImageBytes,
+            canvasWidth: newOffscreenCanvasWidth,
+            canvasHeight: newOffscreenCanvasHeight,
+            scaling
+          })
+
+          if (scalingImageBytes instanceof Uint8Array) {
+            const imageData = UICanvasContext2D.current!.createImageData(newUICanvasWidth, newUICanvasHeight)
+            const supportedByteLength = imageData.data.byteLength
+
+            // to prevent image bytes from going out of bounds
+            const newUICanvasImageBytes = scalingImageBytes.slice(0, supportedByteLength)
+
+            setUICanvasImageBytes(newUICanvasImageBytes)
+          }
+        }
 
         if (type === IMAGE_BYTES_ACTION_TYPES.RESTORE) return
 
         return addOffscreenLog({
           imageBytes: lastImageBytes,
-          canvasWidth: width,
-          canvasHeight: height
+          canvasWidth: newOffscreenCanvasWidth,
+          canvasHeight: newOffscreenCanvasHeight
         })
       }
     })
-  }, [UICanvas, offscreenCanvas, setOffscreenCanvasImageBytes, setUICanvasImageBytes, addUILog, addOffscreenLog])
+  }, [UICanvas, UICanvasContext2D, offscreenCanvas, taskRunningChecker, setOffscreenCanvasImageBytes, setUICanvasImageBytes, addUILog, addOffscreenLog])
 
   const clearCanvas = useCallback(() => {
     const terminateWorkerEvent = new Event(EVENTS.TERMINATE_OFFSCREEN_CANVAS_WORKER)

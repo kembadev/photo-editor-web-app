@@ -13,11 +13,6 @@ interface ClippedImageBytes {
   }
 }
 
-export interface ClippedImageBytesResponse {
-  dimensions: { width: number; height: number };
-  imageBytes: Uint8Array
-}
-
 export function getClippedImageBytes ({
   imageBytesToCut,
   widthOfImgToCut,

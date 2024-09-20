@@ -1,13 +1,20 @@
+import { type AvailableToolsNames } from '../../components/Tools/tools.tsx'
+
 import { ZOOM_LIMITS } from '../../consts.ts'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useUICanvas } from './useUICanvas.ts'
 
 import { dispatchWarning } from '../../methods/dispatchWarning.ts'
 import { getScalingImageBytes } from '../../methods/getScaledImage.ts'
 import { getClippedImageBytes } from '../../methods/getClippedImageBytes.ts'
+import { getModifiedImageBytes } from '../../helpers/Controls/getModifiedImageBytes.ts'
 
 import { ImageError } from '../../error-handling/ImageError.ts'
+
+interface UseZoomProps {
+  currentToolSelected: AvailableToolsNames
+}
 
 export type Position = { x: number; y: number }
 
@@ -47,7 +54,7 @@ interface RestOfPropsOnClippedImageBytes {
 
 const changeZoomDefaultProps: ChangeZoom = { pointerPosition: 'center', n: 0.2 }
 
-export function useZoom () {
+export function useZoom ({ currentToolSelected }: UseZoomProps) {
   const {
     UICanvas,
     UICanvasContext2D,
@@ -61,7 +68,7 @@ export function useZoom () {
   const prevTouchesPosition = useRef<PrevTouchesPosition>(['center', 'center'])
 
   const zoomIn = useCallback(({ pointerPosition = 'center', n = 0.2 }: ChangeZoom = changeZoomDefaultProps) => {
-    if (zoom.level === ZOOM_LIMITS.MAX) return
+    if (currentToolSelected === 'Crop' || zoom.level === ZOOM_LIMITS.MAX) return
 
     setZoom(prevZoom => {
       const { level } = prevZoom
@@ -74,10 +81,10 @@ export function useZoom () {
 
       return { level: newZoomLevel, pointerPosition }
     })
-  }, [zoom])
+  }, [zoom, currentToolSelected])
 
   const zoomOut = useCallback(({ pointerPosition = 'center', n = 0.2 }: ChangeZoom = changeZoomDefaultProps) => {
-    if (zoom.level === ZOOM_LIMITS.MIN) return
+    if (currentToolSelected === 'Crop' || zoom.level === ZOOM_LIMITS.MIN) return
 
     setZoom(prevZoom => {
       const { level } = prevZoom
@@ -90,7 +97,7 @@ export function useZoom () {
 
       return { level: newZoomLevel, pointerPosition }
     })
-  }, [zoom])
+  }, [zoom, currentToolSelected])
 
   const restoreZoom = useCallback(() => {
     setZoom({
@@ -266,12 +273,26 @@ export function useZoom () {
     }
   }, [UICanvas, onWheelChange, onTouchStart, onTouchChange])
 
-  useEffect(() => {
-    if (!getScalingImageBytes ||
-      !UICanvas.current ||
-      !UICanvasContext2D.current) return
+  useLayoutEffect(() => {
+    if (!UICanvas.current || !UICanvasContext2D.current) return
 
     const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
+
+    const imageData = UICanvasContext2D.current.createImageData(UICanvasWidth, UICanvasHeight)
+
+    if (currentToolSelected === 'Crop') {
+      const imageBytes = getModifiedImageBytes({
+        imageBytes: UICanvasImageBytes,
+        imgWidth: UICanvasWidth
+      }, rowOfPixels => rowOfPixels.map(
+        pixel => pixel.map((c, i) => i === 3 ? c : c / 2)
+      ))
+
+      imageData.data.set(imageBytes)
+      UICanvasContext2D.current.putImageData(imageData, 0, 0)
+
+      return
+    }
 
     const { scalingImageBytes } = getScalingImageBytes({
       imageBytes: UICanvasImageBytes,
@@ -300,6 +321,8 @@ export function useZoom () {
       UICanvasHeight
     })
 
+    prevZoom.current = zoom
+
     const { sx, sy } = restOfProps.requirements.fromCorner
     prevFromCorner.current = { sx, sy }
 
@@ -308,12 +331,9 @@ export function useZoom () {
       ...restOfProps
     })
 
-    const imageData = UICanvasContext2D.current.createImageData(UICanvasWidth, UICanvasHeight)
     imageData.data.set(clippedImageBytes)
     UICanvasContext2D.current.putImageData(imageData, 0, 0)
-
-    prevZoom.current = zoom
-  }, [zoom, UICanvasImageBytes, UICanvas, UICanvasContext2D, getRestOfPropsOnClippedImageBytes])
+  }, [zoom, UICanvasImageBytes, UICanvas, UICanvasContext2D, getRestOfPropsOnClippedImageBytes, currentToolSelected])
 
   return { zoom, zoomIn, zoomOut, restoreZoom }
 }

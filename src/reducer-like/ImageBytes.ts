@@ -1,4 +1,7 @@
-import { DIRECTION } from '../consts.ts'
+import { type DIRECTION } from '../consts.ts'
+
+import { getClippedImageBytes } from '../methods/getClippedImageBytes.ts'
+import { getScalingImageBytes } from '../methods/getScaledImage.ts'
 
 import { lazyLoading, suspenseLoading } from '../common/helpers/LazyLoading.ts'
 import { getDecompressedImageBytes } from '../lib/compress.ts'
@@ -9,8 +12,8 @@ export enum IMAGE_BYTES_ACTION_TYPES {
   // RESET = 'RESET',
   RESTORE = 'RESTORE',
   INVERT = 'INVERT',
-  ROTATE = 'ROTATE'
-  // CROP = 'CROP'
+  ROTATE = 'ROTATE',
+  CROP = 'CROP'
 }
 
 export interface CanvasDimensions {
@@ -33,7 +36,20 @@ type ActionRotate = {
 
 type ActionInvert = { type: IMAGE_BYTES_ACTION_TYPES.INVERT }
 
-export type ReducerAction = ActionRestore | ActionRotate | ActionInvert
+export interface cropPayload {
+  proportionOfSX: number;
+  proportionOfSY: number;
+  proportionOfWidth: number;
+  proportionOfHeight: number;
+  scaling?: number
+}
+
+type ActionCrop = {
+  type: IMAGE_BYTES_ACTION_TYPES.CROP,
+  payload: cropPayload
+}
+
+export type ReducerAction = ActionRestore | ActionRotate | ActionInvert | ActionCrop
 
 interface GetUpdatedImageBytesProps {
   state: Uint8Array;
@@ -72,6 +88,40 @@ const imageBytes: GetUpdatedImageBytes = async ({ state, action, canvasDimension
 
     const getRotatedImageBytes = await suspenseLoading(lazyGetRotatedImageBytes)
     return getRotatedImageBytes({ imageBytes: state, canvasWidth, canvasHeight, direction })
+  }
+
+  if (type === IMAGE_BYTES_ACTION_TYPES.CROP) {
+    const { proportionOfSX, proportionOfSY, proportionOfWidth, proportionOfHeight, scaling } = action.payload
+
+    const finalWidth = proportionOfWidth * canvasWidth
+    const finalHeight = proportionOfHeight * canvasHeight
+
+    const clippedImageBytes = getClippedImageBytes({
+      imageBytesToCut: state,
+      widthOfImgToCut: canvasWidth,
+      heightOfImgToCut: canvasHeight,
+      requirements: {
+        finalWidth,
+        finalHeight,
+        fromCorner: {
+          sx: proportionOfSX * canvasWidth,
+          sy: proportionOfSY * canvasHeight
+        }
+      }
+    })
+
+    if (scaling === undefined) {
+      return clippedImageBytes
+    }
+
+    const { scalingImageBytes } = getScalingImageBytes({
+      imageBytes: clippedImageBytes,
+      canvasWidth: finalWidth,
+      canvasHeight: finalHeight,
+      scaling
+    })
+
+    return scalingImageBytes as Uint8Array
   }
 
   return state
