@@ -1,16 +1,71 @@
-.rotate_container,
-.invert_container {
+.aspect-ratio label,
+.rotate,
+.invert {
   &>* {
     height: 100%;
   }
 }
 
-.rotate_container {
+.rotate {
   display: flex;
   flex-direction: row;
   gap: 5px;
 }
 
-.rotate_container>* {
+.rotate>* {
   aspect-ratio: 1;
+}
+
+.aspect-ratio {
+  label {
+    cursor: pointer;
+  }
+
+  button {
+    pointer-events: none
+  }
+}
+
+.aspect-ratio__selector {
+  min-width: 50vw;
+  display: none;
+  background-color: var(--darkMain);
+  border-radius: 8px;
+
+  position: absolute;
+  z-index: 10000;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.aspect-ratio:has(input:checked) .aspect-ratio__selector {
+  display: block;
+}
+
+.aspect-ratio__selector ul {
+  padding: 0;
+  margin: 0;
+  list-style-type: none;
+
+  button {
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    text-align: left;
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+
+  li {
+    cursor: pointer;
+  }
+
+  li:hover {
+    background-color: color-mix(in srgb, var(--textMain) 5%, transparent);
+  }
+
+  li+li {
+    border-top: 1px solid var(--textMain);
+  }
 }

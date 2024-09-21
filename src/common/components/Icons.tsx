@@ -104,6 +104,14 @@ function InvertIcon () {
   )
 }
 
+function AspectRatioIcon () {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 24 24">
+      <path fill="#ffffff" d="M14 17h5v-5h-2v3h-3zm-9-5h2V9h3V7H5zm-1 8q-.825 0-1.412-.587T2 18V6q0-.825.588-1.412T4 4h16q.825 0 1.413.588T22 6v12q0 .825-.587 1.413T20 20zm0-2h16V6H4zm0 0V6z"/>
+    </svg>
+  )
+}
+
 export {
   ScaleIcon,
   UndoIcon,
@@ -115,5 +123,6 @@ export {
   CheckIcon,
   XIcon,
   PlusIcon,
-  MinusIcon
+  MinusIcon,
+  AspectRatioIcon
 }

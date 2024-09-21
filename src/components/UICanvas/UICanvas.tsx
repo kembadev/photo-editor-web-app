@@ -39,16 +39,16 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
 
     if (currentToolSelected !== 'Crop' && desiredTool === 'Crop') restoreZoom()
 
-    if (currentToolSelected === 'Crop' && desiredTool !== 'Crop') {
-      const doCrop = () => {
-        console.warn('crop exec')
-      }
-
-      doCrop()
-    }
-
     toggleTool(desiredTool)
   }, [currentToolSelected, toggleTool, restoreZoom])
+
+  useEffect(() => {
+    window.addEventListener(EVENTS.TOGGLE_TOOL, onToggleTool as EventListener)
+
+    return () => {
+      window.removeEventListener(EVENTS.TOGGLE_TOOL, onToggleTool as EventListener)
+    }
+  }, [currentToolSelected, restoreZoom, toggleTool, onToggleTool])
 
   useLayoutEffect(() => {
     if (offscreenCanvasImageBytes.byteLength === 0 ||
@@ -61,14 +61,6 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
     imageData.data.set(offscreenCanvasImageBytes)
     offscreenCanvasContext2D.current.putImageData(imageData, 0, 0)
   }, [offscreenCanvasImageBytes, offscreenCanvas, offscreenCanvasContext2D])
-
-  useEffect(() => {
-    window.addEventListener(EVENTS.TOGGLE_TOOL, onToggleTool as EventListener)
-
-    return () => {
-      window.removeEventListener(EVENTS.TOGGLE_TOOL, onToggleTool as EventListener)
-    }
-  }, [currentToolSelected, restoreZoom, toggleTool, onToggleTool])
 
   return (
     <>
@@ -84,7 +76,7 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
           className='UICanvas'
           ref={UICanvas}
         />
-        {currentToolSelected === 'Crop' && <OverlayCanvas />}
+        {currentToolSelected === 'Crop' && <OverlayCanvas currentToolSelected={currentToolSelected} />}
         <section
           className='zoom-controls_container'
           style={{

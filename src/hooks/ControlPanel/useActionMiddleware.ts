@@ -88,7 +88,7 @@ export function useActionMiddleware () {
 
         const scaling = newUICanvasWidth / newOffscreenCanvasWidth
 
-        if (taskRunningChecker.isQueueClear && scaling > 0.25) {
+        if (taskRunningChecker.isQueueClear && scaling > 3 / 17) {
           // to ensure that the image quality of UICanvas is the highest
           const { scalingImageBytes } = getScalingImageBytes({
             imageBytes: lastImageBytes,

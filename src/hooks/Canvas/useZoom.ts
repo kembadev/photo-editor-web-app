@@ -107,6 +107,8 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
   }, [])
 
   const onWheelChange = useCallback((e: WheelEvent) => {
+    e.preventDefault()
+
     if (!UICanvas.current) return
 
     const { deltaY, clientX, clientY } = e
