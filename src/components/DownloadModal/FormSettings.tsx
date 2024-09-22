@@ -10,10 +10,11 @@ import { ImagePreview } from './ImagePreview.tsx'
 import { XIcon } from '../../common/components/Icons.tsx'
 
 interface FormSettingsProps {
-  closeDownloadModal: () => void
+  closeDownloadModal: () => void;
+  isModalOpened: boolean
 }
 
-export function FormSettings ({ closeDownloadModal }: FormSettingsProps) {
+export function FormSettings ({ closeDownloadModal, isModalOpened }: FormSettingsProps) {
   const [desiredScale, setDesiredScale] = useState(1)
 
   const { offscreenCanvas, offscreenCanvasImageBytes } = useOffscreenCanvas()
@@ -50,7 +51,7 @@ export function FormSettings ({ closeDownloadModal }: FormSettingsProps) {
       >
         <header className='config-controls'>
           <div>
-            <ImagePreview />
+            <ImagePreview isModalOpened={isModalOpened} />
             <section className='config-controls__scale'>
               <article>
                 <input

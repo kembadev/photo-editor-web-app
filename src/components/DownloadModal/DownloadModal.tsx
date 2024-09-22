@@ -1,6 +1,6 @@
 import './DownloadModal.css'
 
-import { forwardRef, useImperativeHandle, useRef } from 'react'
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { useProcessesChecker } from '../../common/hooks/useProcessesChecker.ts'
 
 import { FormSettings } from './FormSettings.tsx'
@@ -11,15 +11,23 @@ export interface DownloadModalHandle {
 }
 
 const DownloadModal = forwardRef<DownloadModalHandle>((_, ref) => {
+  const [isModalOpened, setIsModalOpened] = useState(false)
+
   const { taskRunningChecker } = useProcessesChecker()
 
   const modalRef = useRef<HTMLDialogElement>(null)
 
   useImperativeHandle(ref, () => ({
-    showModal: () => modalRef.current?.showModal()
+    showModal: () => {
+      modalRef.current?.showModal()
+      setIsModalOpened(true)
+    }
   }))
 
-  const closeDownloadModal = () => modalRef.current?.close()
+  const closeDownloadModal = () => {
+    modalRef.current?.close()
+    setIsModalOpened(false)
+  }
 
   return (
     <dialog
@@ -30,7 +38,7 @@ const DownloadModal = forwardRef<DownloadModalHandle>((_, ref) => {
     >
       {
         taskRunningChecker.isQueueClear
-          ? <FormSettings closeDownloadModal={closeDownloadModal} />
+          ? <FormSettings closeDownloadModal={closeDownloadModal} isModalOpened={isModalOpened} />
           : <Progress closeDownloadModal={closeDownloadModal} />
       }
     </dialog>
