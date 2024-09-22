@@ -98,8 +98,7 @@ export function useActionMiddleware () {
           })
 
           if (scalingImageBytes instanceof Uint8Array) {
-            const imageData = UICanvasContext2D.current!.createImageData(newUICanvasWidth, newUICanvasHeight)
-            const supportedByteLength = imageData.data.byteLength
+            const supportedByteLength = newUICanvasWidth * newUICanvasHeight * 4
 
             // to prevent image bytes from going out of bounds
             const newUICanvasImageBytes = scalingImageBytes.slice(0, supportedByteLength)
@@ -117,7 +116,7 @@ export function useActionMiddleware () {
         })
       }
     })
-  }, [UICanvas, UICanvasContext2D, offscreenCanvas, taskRunningChecker, setOffscreenCanvasImageBytes, setUICanvasImageBytes, addUILog, addOffscreenLog])
+  }, [UICanvas, offscreenCanvas, taskRunningChecker, setOffscreenCanvasImageBytes, setUICanvasImageBytes, addUILog, addOffscreenLog])
 
   const clearCanvas = useCallback(() => {
     const terminateWorkerEvent = new Event(EVENTS.TERMINATE_OFFSCREEN_CANVAS_WORKER)

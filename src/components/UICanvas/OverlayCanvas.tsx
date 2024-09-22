@@ -299,8 +299,20 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
       return
     }
 
+    if (UICanvasWidth / UICanvasHeight > aspectRatio) {
+      const newWidth = UICanvasHeight * aspectRatio
+      const newSX = (UICanvasWidth - newWidth) / 2
+
+      setGridSizeAndOffset({
+        width: { sx: newSX, dw: newWidth },
+        height: { sy: 0, dh: UICanvasHeight }
+      })
+
+      return
+    }
+
     const newHeight = UICanvasWidth / aspectRatio
-    const newSY = (UICanvasHeight / 2) - (newHeight / 2)
+    const newSY = (UICanvasHeight - newHeight) / 2
 
     setGridSizeAndOffset({
       width: { sx: 0, dw: UICanvasWidth },
