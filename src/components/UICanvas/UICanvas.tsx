@@ -6,7 +6,7 @@ import { type AvailableToolsNames } from '../Tools/tools.tsx'
 import { EVENTS, ZOOM_LIMITS } from '../../consts.ts'
 import { IS_DEVELOPMENT } from '../../config.ts'
 
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { useUICanvas } from '../../hooks/Canvas/useUICanvas.ts'
 import { useOffscreenCanvas } from '../../hooks/Canvas/useOffscreenCanvas.ts'
 import { useZoom } from '../../hooks/Canvas/useZoom.ts'
@@ -22,6 +22,8 @@ interface CanvasProps {
 }
 
 export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
+  const [isBannerVisible, setIsBannerVisible] = useState(true)
+
   const { zoom, zoomIn, zoomOut, restoreZoom } = useZoom({ currentToolSelected })
 
   const {
@@ -76,6 +78,31 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
           className='UICanvas'
           ref={UICanvas}
         />
+        <div
+          className='transparent-background'
+          style={{
+            width: isBannerVisible ? UICanvas.current?.width : 0,
+            height: isBannerVisible ? UICanvas.current?.height : 0
+          }}
+        />
+        <button
+          title='This does not affect your image in any way'
+          style={{
+            backgroundColor: 'transparent',
+            fontSize: '0.75rem',
+            padding: '3px',
+            border: '1px solid #eee',
+            borderRadius: '3px',
+            position: 'absolute',
+            top: 0,
+            right: 0
+          }}
+          onClick={() => {
+            setIsBannerVisible(!isBannerVisible)
+          }}
+        >
+          {isBannerVisible ? 'Hide transparent background' : 'Show transparent background'}
+        </button>
         {currentToolSelected === 'Crop' && <OverlayCanvas currentToolSelected={currentToolSelected} />}
         <section
           className='zoom-controls_container'

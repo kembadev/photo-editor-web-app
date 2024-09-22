@@ -1,8 +1,8 @@
-.aspect-ratio label,
+.aspect-ratio,
 .rotate,
 .invert {
-  &>* {
-    height: 100%;
+  button {
+    width: 35px;
   }
 }
 
@@ -10,10 +10,6 @@
   display: flex;
   flex-direction: row;
   gap: 5px;
-}
-
-.rotate>* {
-  aspect-ratio: 1;
 }
 
 .aspect-ratio {
@@ -34,9 +30,9 @@
 
   position: absolute;
   z-index: 10000;
-  top: 10%;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
 }
 
 .aspect-ratio:has(input:checked) .aspect-ratio__selector {

@@ -9,6 +9,20 @@
     position: relative;
     z-index: 150;
   }
+
+  .transparent-background {
+    background:
+      repeating-linear-gradient(#fff 0 10px,
+        #ccc 10px 20px),
+      repeating-linear-gradient(90deg,
+        #fff 0 10px,
+        #ccc 10px 20px);
+    background-blend-mode:
+      multiply
+      /* difference */
+    ;
+    position: absolute;
+  }
 }
 
 .UICanvas_container .zoom-controls_container {

@@ -284,7 +284,11 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
   }, [currentToolSelected, crop])
 
   const onAspectRatioChange = useCallback((e: CustomEvent<AspectRatio>) => {
-    if (!UICanvas.current) return
+    if (!UICanvas.current || !offscreenCanvas.current) return
+
+    const { width: offscreenCanvasWidth, height: offscreenCanvasHeight } = offscreenCanvas.current
+
+    if (offscreenCanvasWidth <= 16 || offscreenCanvasHeight <= 16) return
 
     const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
 
@@ -318,7 +322,7 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
       width: { sx: 0, dw: UICanvasWidth },
       height: { sy: newSY, dh: newHeight }
     })
-  }, [UICanvas])
+  }, [UICanvas, offscreenCanvas])
 
   useEffect(() => {
     window.addEventListener(EVENTS.TOGGLE_TOOL, onToggleTool as EventListener)
