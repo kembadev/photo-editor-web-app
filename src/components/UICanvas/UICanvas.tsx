@@ -95,7 +95,9 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
             borderRadius: '3px',
             position: 'absolute',
             top: 0,
-            right: 0
+            right: 0,
+            zIndex: 1000,
+            opacity: 0.5
           }}
           onClick={() => {
             setIsBannerVisible(!isBannerVisible)

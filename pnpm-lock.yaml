@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      canvas-filters:
+        specifier: ^1.0.1
+        version: 1.0.1
       fflate:
         specifier: 0.8.2
         version: 0.8.2
@@ -693,6 +696,9 @@ packages:
   callsites@3.1.0:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
     engines: {node: '>=6'}
+
+  canvas-filters@1.0.1:
+    resolution: {integrity: sha512-kD5l/sezvOD8P1ZySonxpgUMLzt6y+LhcUcpEXMnOI0Yvi3fv/7lB4xSdAt/jWRUhm5A6t4MTMCNoxaxsyEmXQ==}
 
   chai@5.1.1:
     resolution: {integrity: sha512-pT1ZgP8rPNqUgieVaEY+ryQr6Q4HXNg8Ei9UnLUrjN4IA7dvQC5JB+/kxVcPNDHyBcc/26CXPkbNzq3qwrOEKA==}
@@ -2609,6 +2615,8 @@ snapshots:
       set-function-length: 1.2.2
 
   callsites@3.1.0: {}
+
+  canvas-filters@1.0.1: {}
 
   chai@5.1.1:
     dependencies:

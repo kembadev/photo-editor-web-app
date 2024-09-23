@@ -8,15 +8,18 @@
 }
 
 .download-modal__image-preview .image-preview-tiny {
-  max-width: 50px;
-  max-height: 50px;
-  min-width: 20px;
-  box-shadow: 0 0 2px grey;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 60px;
+  max-height: 60px;
+  object-fit: contain;
   font-size: 0.75em;
 }
 
 .download-modal__image-preview .image-preview-wider__container {
   display: none;
+  justify-content: center;
+  align-items: center;
   position: absolute;
   left: calc(100% + 10px);
   top: calc(50% - 14px);
@@ -26,9 +29,11 @@
   border: 1px solid #e3e3e3;
 
   img {
+    min-width: 75px;
+    min-height: 75px;
     max-width: 150px;
     max-height: 150px;
-    min-width: 100px;
+    object-fit: contain;
   }
 
   &::after {
