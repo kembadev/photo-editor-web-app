@@ -1,4 +1,4 @@
-import { type DIRECTION } from '../consts.ts'
+import { type DIRECTION, type FILTERS } from '../consts.ts'
 
 import { getClippedImageBytes } from '../methods/getClippedImageBytes.ts'
 import { getScalingImageBytes } from '../methods/getScaledImage.ts'
@@ -13,7 +13,8 @@ export enum IMAGE_BYTES_ACTION_TYPES {
   RESTORE = 'RESTORE',
   INVERT = 'INVERT',
   ROTATE = 'ROTATE',
-  CROP = 'CROP'
+  CROP = 'CROP',
+  FILTER = 'FILTER'
 }
 
 export interface CanvasDimensions {
@@ -49,7 +50,12 @@ type ActionCrop = {
   payload: cropPayload
 }
 
-export type ReducerAction = ActionRestore | ActionRotate | ActionInvert | ActionCrop
+type ActionFilter = {
+  type: IMAGE_BYTES_ACTION_TYPES.FILTER;
+  payload: { filter: FILTERS }
+}
+
+export type ReducerAction = ActionRestore | ActionRotate | ActionInvert | ActionCrop | ActionFilter
 
 interface GetUpdatedImageBytesProps {
   state: Uint8Array;
@@ -69,6 +75,26 @@ const lazyGetRotatedImageBytes = lazyLoading(async () => {
   const { getRotatedImageBytes } = await import('../methods/getRotatedImageBytes.ts')
   return getRotatedImageBytes
 })
+
+const lazyApplyFilter = lazyLoading(async () => {
+  const { applyFilter } = await import('../methods/applyFilter.ts')
+  return applyFilter
+})
+
+interface WorkerDocument extends Document {
+  createElement(tagName: 'canvas'): OffscreenCanvas;
+  createElement(tagName: string): never
+}
+
+const workerDocument = {
+  createElement: (tagName: string) => {
+    if (tagName === 'canvas') {
+      return new OffscreenCanvas(0, 0)
+    }
+
+    throw new Error(`Unsupported element: ${tagName}`)
+  }
+} as WorkerDocument
 
 const imageBytes: GetUpdatedImageBytes = async ({ state, action, canvasDimensions }) => {
   const { type } = action
@@ -124,6 +150,21 @@ const imageBytes: GetUpdatedImageBytes = async ({ state, action, canvasDimension
     return scalingImageBytes as Uint8Array
   }
 
+  if (type === IMAGE_BYTES_ACTION_TYPES.FILTER) {
+    const applyFilter = await suspenseLoading(lazyApplyFilter)
+
+    const imageData = new ImageData(new Uint8ClampedArray(state.buffer), canvasWidth, state.length / (4 * canvasWidth))
+    const { filter } = action.payload
+
+    if (typeof window === 'undefined') {
+      self.document = workerDocument
+    }
+
+    const newImageData = applyFilter({ filter, imageData })
+
+    return new Uint8Array(newImageData.data.buffer)
+  }
+
   return state
 }
 
@@ -133,6 +174,7 @@ export async function getUpdatedImageBytes (
   try {
     return await imageBytes({ state, action, canvasDimensions })
   } catch (err) {
+    console.error(err)
     return err as Error
   }
 }

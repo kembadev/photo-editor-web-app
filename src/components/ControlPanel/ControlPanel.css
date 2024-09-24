@@ -21,6 +21,11 @@ button {
   flex-direction: column;
   gap: 10px;
   margin-inline: auto auto;
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--borderColor) transparent;
+  }
 }
 
 .control-panel__image-actions {
@@ -28,13 +33,9 @@ button {
   flex-direction: column;
   gap: 8px;
   border-radius: 4px;
-
-  &>* {
-    max-height: 35px;
-  }
 }
 
-.control-panel__image-actions .restore-actions_container {
+.control-panel__image-actions .restore-actions {
   width: 120px;
   display: inline-grid;
   grid-template-columns: 1fr 1fr;
@@ -62,43 +63,23 @@ button {
   }
 }
 
-
-.control-panel__image-actions .tool-features_container {
+.control-panel__image-actions .tool-features {
+  height: 60px;
   display: flex;
-  flex-direction: row;
   justify-content: center;
-  gap: 12px;
-
-  &>* {
-    height: 35px;
-  }
-}
-
-
-.control-panel__image-actions .tool-features_container,
-.control-panel__tools-selector {
-  overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--borderColor) transparent;
+  gap: 6px;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 .control-panel__tools-selector {
   border-top: 1px solid var(--borderColor);
   padding-top: 10px;
-  padding-bottom: 5px;
-
-  ul {
-    display: flex;
-    flex-direction: row;
-    gap: 8px;
-    padding: 0;
-    margin: 0;
-    list-style-type: none;
-  }
+  overflow-x: hidden;
 }
 
 
-.control-panel__save-discard_cotainer {
+.control-panel__save-discard {
   height: 40px;
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -118,13 +99,13 @@ button {
   }
 }
 
-.control-panel__save-discard_cotainer .save-btn {
+.control-panel__save-discard .save-btn {
   background-color: var(--highlightColor);
   color: var(--contrastColor);
   border: none;
 }
 
-.control-panel__save-discard_cotainer .discard-btn {
+.control-panel__save-discard .discard-btn {
   background-color: color-mix(in srgb, var(--contrastColor) 5%, transparent);
   border: none;
   box-shadow: 1px 1px 1px rgb(186, 195, 197);

@@ -42,8 +42,8 @@ export function Crop () {
   }, [])
 
   return (
-    <>
-      <div className='aspect-ratio'>
+    <div className='crop-features'>
+      <section className='crop-features__aspect-ratio'>
         <label htmlFor={checkboxInput} title='Select aspect ratio'>
           <button>
             <AspectRatioIcon />
@@ -56,31 +56,31 @@ export function Crop () {
           onChange={handleOnCheckboxChange}
           hidden
           />
-        <section className='aspect-ratio__selector'>
+        <section className='crop-features__aspect-ratio--selector'>
           <ul>
             {
               aspectRatios.map((aspectRatio, i) => (
                 <li key={i} onClick={() => handleOnAspectRatioSelect(aspectRatio)}>
-                  <button>{aspectRatio.name}</button>
+                  {aspectRatio.name}
                 </li>
               ))
             }
           </ul>
         </section>
-      </div>
-      <div className="rotate">
+      </section>
+      <section className="crop-features__rotate">
         <button title="Rotate to left" onClick={rotateToLeft}>
           <RotateLeftIcon />
         </button>
         <button title="Rotate to right" onClick={rotateToRight}>
           <RotateRightIcon />
         </button>
-      </div>
-      <div className="invert">
+      </section>
+      <section className="crop-features__invert">
         <button title="Invert image" onClick={invertCanvas}>
           <InvertIcon />
         </button>
-      </div>
-    </>
+      </section>
+    </div>
   )
 }

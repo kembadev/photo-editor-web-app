@@ -1,4 +1,5 @@
 import { Crop } from './Crop/Crop.tsx'
+import { Filters } from './Filters/Filters.tsx'
 
 export const AVAILABLE_TOOLS = [
   {
@@ -7,7 +8,7 @@ export const AVAILABLE_TOOLS = [
   },
   {
     name: 'Filters',
-    Component: () => <button>Sepia</button>
+    Component: Filters
   },
   {
     name: 'Markup',

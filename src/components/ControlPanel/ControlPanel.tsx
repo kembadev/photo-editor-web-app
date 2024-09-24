@@ -65,7 +65,7 @@ export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
   return (
     <header className='control-panel'>
       <section className="control-panel__image-actions">
-        <article className="restore-actions_container">
+        <article className="restore-actions">
           <button
             title="Undo"
             onClick={undo}
@@ -88,7 +88,7 @@ export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
           </button>
         </article>
 
-        <article className="tool-features_container">
+        <article className="tool-features">
           <ToolFeatures />
         </article>
       </section>
@@ -97,7 +97,7 @@ export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
         <ToolsList currentToolSelected={currentToolSelected} />
       </section>
 
-      <section className='control-panel__save-discard_cotainer'>
+      <section className='control-panel__save-discard'>
         <button
           className="save-btn"
           title="Save image"

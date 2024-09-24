@@ -30,3 +30,15 @@ export enum RESTORE {
   UNDO = 'UNDO',
   REDO = 'REDO'
 }
+
+export enum FILTERS {
+  GRAY_SCALE = 'GRAY_SCALE',
+  SEPIA = 'SEPIA',
+  ENRICH = 'ENRICH',
+  SOLARIZE = 'SOLARIZE',
+  EMBOSS = 'EMBOSS',
+  EDGE = 'EDGE',
+  STACK_BLUR = 'STACK_BLUR',
+  POSTERIZE = 'POSTERIZE',
+  SHARPEN = 'SHARPEN'
+}

@@ -1,3 +1,5 @@
+import './ToolsList.css'
+
 import { type AvailableToolsNames, AVAILABLE_TOOLS } from './tools.tsx'
 
 import { EVENTS } from '../../consts.ts'
@@ -13,7 +15,7 @@ export function ToolsList ({ currentToolSelected }: ToolsListProps) {
   }
 
   return (
-    <ul>
+    <ul className='tools-list'>
       {
         AVAILABLE_TOOLS.map(({ name }) => (
           <li key={name}>

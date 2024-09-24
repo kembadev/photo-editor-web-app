@@ -1,4 +1,4 @@
-import { type DIRECTION, RESTORE } from '../../consts.ts'
+import { type DIRECTION, RESTORE, type FILTERS } from '../../consts.ts'
 import { IMAGE_BYTES_ACTION_TYPES, type cropPayload } from '../../reducer-like/ImageBytes.ts'
 
 import { useActionMiddleware } from './useActionMiddleware.ts'
@@ -106,5 +106,12 @@ export function useAction () {
     })
   }
 
-  return { setInitialCharge, clearCanvas, restoreCanvas, invertCanvas, rotateCanvas, cropCanvas }
+  const applyFilter = (filter: FILTERS) => {
+    actionMiddleware({
+      type: IMAGE_BYTES_ACTION_TYPES.FILTER,
+      payload: { filter }
+    })
+  }
+
+  return { setInitialCharge, clearCanvas, restoreCanvas, invertCanvas, rotateCanvas, cropCanvas, applyFilter }
 }

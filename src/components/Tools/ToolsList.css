@@ -1,0 +1,14 @@
+.tools-list {
+  display: flex;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style-type: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+
+  &>* {
+    scroll-snap-align: start;
+  }
+}

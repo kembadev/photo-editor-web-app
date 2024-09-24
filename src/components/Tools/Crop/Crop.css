@@ -1,18 +1,27 @@
-.aspect-ratio,
-.rotate,
-.invert {
+.crop-features {
+  width: 70%;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  place-content: center;
+  gap: 12px;
+}
+
+.crop-features__aspect-ratio,
+.crop-features__rotate,
+.crop-features__invert {
   button {
-    width: 35px;
+    width: 40px;
+    aspect-ratio: 1;
   }
 }
 
-.rotate {
+.crop-features__rotate {
   display: flex;
   flex-direction: row;
-  gap: 5px;
+  gap: 6px;
 }
 
-.aspect-ratio {
+.crop-features__aspect-ratio {
   label {
     cursor: pointer;
   }
@@ -22,7 +31,7 @@
   }
 }
 
-.aspect-ratio__selector {
+.crop-features__aspect-ratio--selector {
   min-width: 50vw;
   display: none;
   background-color: var(--darkMain);
@@ -35,25 +44,18 @@
   transform: translate(-50%, -50%);
 }
 
-.aspect-ratio:has(input:checked) .aspect-ratio__selector {
+.crop-features__aspect-ratio:has(input:checked) .crop-features__aspect-ratio--selector {
   display: block;
 }
 
-.aspect-ratio__selector ul {
+.crop-features__aspect-ratio--selector ul {
   padding: 0;
   margin: 0;
   list-style-type: none;
 
-  button {
-    width: 100%;
-    height: 100%;
-    background-color: transparent;
-    text-align: left;
+  li {
     padding: 10px;
     font-size: 0.8rem;
-  }
-
-  li {
     cursor: pointer;
   }
 

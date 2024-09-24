@@ -1,0 +1,18 @@
+.image-filters {
+  display: flex;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style-type: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+}
+
+.image-filters__item {
+  scroll-snap-align: start;
+
+  button {
+    height: 100%;
+  }
+}
