@@ -2,12 +2,11 @@ import { type AvailableToolsNames } from '../../components/Tools/tools.tsx'
 
 import { ZOOM_LIMITS } from '../../consts.ts'
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useUICanvas } from './useUICanvas.ts'
 
-import { dispatchWarning } from '../../methods/dispatchWarning.ts'
-import { getScalingImageBytes } from '../../methods/getScaledImage.ts'
-import { getClippedImageBytes } from '../../methods/getClippedImageBytes.ts'
+import { getScaledImageData } from '../../methods/getScaledImage.ts'
+import { getClippedImageData } from '../../methods/getClippedImageData.ts'
 import { getModifiedImageBytes } from '../../helpers/Controls/getModifiedImageBytes.ts'
 
 import { ImageError } from '../../error-handling/ImageError.ts'
@@ -58,7 +57,7 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
   const {
     UICanvas,
     UICanvasContext2D,
-    UICanvasImageBytes
+    UICanvasImageData
   } = useUICanvas()
 
   const [zoom, setZoom] = useState<Zoom>({ level: 1, pointerPosition: 'center' })
@@ -207,7 +206,7 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
     prevTouchesPosition.current = [touch1, touch2]
   }, [UICanvas, getTouchesPosition])
 
-  const getRestOfPropsOnClippedImageBytes = useCallback(({
+  const getRestOfPropsOnClippedImageData = useCallback(({
     zoom,
     prevZoom,
     prevFromCorner,
@@ -275,20 +274,20 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
     }
   }, [UICanvas, onWheelChange, onTouchStart, onTouchChange])
 
-  useLayoutEffect(() => {
-    if (!UICanvas.current || !UICanvasContext2D.current) return
+  useEffect(() => {
+    if (!UICanvasContext2D.current || !UICanvasImageData) return
 
-    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
-
-    const imageData = UICanvasContext2D.current.createImageData(UICanvasWidth, UICanvasHeight)
+    const { width: UICanvasWidth, height: UICanvasHeight, data } = UICanvasImageData
 
     if (currentToolSelected === 'Crop') {
       const imageBytes = getModifiedImageBytes({
-        imageBytes: UICanvasImageBytes,
+        imageBytes: new Uint8Array(data.buffer),
         imgWidth: UICanvasWidth
       }, rowOfPixels => rowOfPixels.map(
         pixel => pixel.map((c, i) => i === 3 ? c : c / 2)
       ))
+
+      const imageData = UICanvasContext2D.current.createImageData(UICanvasWidth, UICanvasHeight)
 
       imageData.data.set(imageBytes)
       UICanvasContext2D.current.putImageData(imageData, 0, 0)
@@ -296,26 +295,9 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
       return
     }
 
-    const { scalingImageBytes } = getScalingImageBytes({
-      imageBytes: UICanvasImageBytes,
-      canvasWidth: UICanvasWidth,
-      canvasHeight: UICanvasHeight,
-      scaling: zoom.level
-    })
+    const { scaledImageData } = getScaledImageData(UICanvasImageData, zoom.level)
 
-    if (!(scalingImageBytes instanceof Uint8Array)) {
-      setZoom(prevZoom.current)
-
-      if (scalingImageBytes === undefined) {
-        dispatchWarning('Unexpected error when zoom in on the image.')
-        return
-      }
-
-      dispatchWarning('The image is too large to zoom in further.')
-      return
-    }
-
-    const restOfProps = getRestOfPropsOnClippedImageBytes({
+    const restOfProps = getRestOfPropsOnClippedImageData({
       zoom,
       prevZoom: prevZoom.current,
       prevFromCorner: prevFromCorner.current,
@@ -328,14 +310,13 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
     const { sx, sy } = restOfProps.requirements.fromCorner
     prevFromCorner.current = { sx, sy }
 
-    const clippedImageBytes = getClippedImageBytes({
-      imageBytesToCut: scalingImageBytes,
+    const clippedImageData = getClippedImageData({
+      imageDataToCut: scaledImageData,
       ...restOfProps
     })
 
-    imageData.data.set(clippedImageBytes)
-    UICanvasContext2D.current.putImageData(imageData, 0, 0)
-  }, [zoom, UICanvasImageBytes, UICanvas, UICanvasContext2D, getRestOfPropsOnClippedImageBytes, currentToolSelected])
+    UICanvasContext2D.current.putImageData(clippedImageData, 0, 0)
+  }, [zoom, UICanvasImageData, UICanvasContext2D, getRestOfPropsOnClippedImageData, currentToolSelected])
 
   return { zoom, zoomIn, zoomOut, restoreZoom }
 }

@@ -1,26 +1,20 @@
-interface ModifiedCanvasProps {
-  imageBytes: Uint8Array;
-  canvasWidth: number;
-  canvasHeight: number
-}
-
 type Modifier = (
   manipulableCanvas: OffscreenCanvas,
   manipulableCtx: OffscreenCanvasRenderingContext2D
 ) => void
 
 export function getCanvas (
-  { imageBytes, canvasWidth, canvasHeight }: ModifiedCanvasProps,
+  imageData: ImageData,
   modifier?: Modifier
 ) {
-  const canvas = new OffscreenCanvas(canvasWidth, canvasHeight)
+  const { width, height } = imageData
+
+  const canvas = new OffscreenCanvas(width, height)
   const ctx = canvas.getContext('2d')!
 
-  const imageData = ctx.createImageData(canvasWidth, canvasHeight)
-  imageData.data.set(imageBytes)
   ctx.putImageData(imageData, 0, 0)
 
-  const manipulableCanvas = new OffscreenCanvas(canvasWidth, canvasHeight)
+  const manipulableCanvas = new OffscreenCanvas(width, height)
   const manipulableCtx = manipulableCanvas.getContext('2d')!
 
   if (modifier) modifier(manipulableCanvas, manipulableCtx)

@@ -1,122 +1,72 @@
 import { type Action } from '../../types/action-middleware.ts'
 
-import { EVENTS } from '../../consts.ts'
+import { EVENTS, USABLE_CANVAS } from '../../consts.ts'
 
-import { useContext, useCallback, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { useUICanvas } from '../Canvas/useUICanvas.ts'
 import { useOffscreenCanvas } from '../Canvas/useOffscreenCanvas.ts'
 import { useLogs } from '../../common/hooks/useLogs.ts'
-import { UICanvasContext } from '../../context/Canvas/UICanvasContext.ts'
-import { OffscreenCanvasContext } from '../../context/Canvas/OffscreenCanvasContext.ts'
-import { useProcessesChecker } from '../../common/hooks/useProcessesChecker.ts'
+import { useImageData } from './useImageData.ts'
 
-import { getUpdatedImageBytes, IMAGE_BYTES_ACTION_TYPES, initialImageBytes, type ReducerAction } from '../../reducer-like/ImageBytes.ts'
+import { getUpdatedImageData, IMAGE_DATA_ACTION_TYPES, type ReducerAction } from '../../reducer-like/ImageData.ts'
 
 import { getTaskGluer, type EnqueueTask } from '../../core/actionTaskQueue.ts'
 import { dispatchWarning } from '../../methods/dispatchWarning.ts'
-import { getScalingImageBytes } from '../../methods/getScaledImage.ts'
-import { ContextProviderNotFound } from '../../error-handling/ContextProviderNotFound.ts'
 
 export interface InitialCharge {
-  initialUICanvasImageBytes: Uint8Array;
-  initialOffscreenCanvasImageBytes: Uint8Array
+  initialUICanvasImageData: ImageData;
+  initialOffscreenCanvasImageData: ImageData
 }
 
-type Cb = (canvas: HTMLCanvasElement | OffscreenCanvas) => Promise<void> | void
+export type ModifierCallback = undefined | ((
+  updatedImageData: ImageData, usingCanvas: USABLE_CANVAS
+) => Promise<ImageData | void> | ImageData | void)
 
 export function useActionMiddleware () {
-  const UIContext = useContext(UICanvasContext)
-  const OffscreenContext = useContext(OffscreenCanvasContext)
+  const { UICanvasContext2D, UICanvasImageData, setUICanvasImageData } = useUICanvas()
+  const { offscreenCanvas, offscreenCanvasContext2D, setOffscreenCanvasImageData } = useOffscreenCanvas()
 
-  if (UIContext === undefined || OffscreenContext === undefined) {
-    throw new ContextProviderNotFound(
-      'useActionMiddleware must be used in both a UICanvasProvider and an OffscreenCanvasProvider.'
-    )
-  }
-
-  const { UICanvas, UICanvasContext2D, UICanvasImageBytes } = useUICanvas()
-  const { offscreenCanvas, offscreenCanvasContext2D } = useOffscreenCanvas()
-
-  const { setUICanvasImageBytes } = UIContext
-  const { setOffscreenCanvasImageBytes } = OffscreenContext
-
-  const { addUILog, addOffscreenLog } = useLogs()
-
-  const { taskRunningChecker } = useProcessesChecker()
+  const { addUILog, addLog } = useLogs()
+  const { UICanvasImageDataHandler, offscreenCanvasImageDataHandler } = useImageData()
 
   const isFirstOverload = useRef(true)
   const enqueueTask = useRef<EnqueueTask | null>(null)
   const isMiddlewareBlocked = useRef(false)
 
-  const setInitialCharge = useCallback(({
-    initialUICanvasImageBytes,
-    initialOffscreenCanvasImageBytes
+  const setInitialCharge = useCallback(async ({
+    initialUICanvasImageData,
+    initialOffscreenCanvasImageData
   }: InitialCharge) => {
-    if (!UICanvas.current || !offscreenCanvas.current) return
-
     if (!isFirstOverload.current) {
       throw new Error('setInitialCharge function already was used.')
     }
 
     isFirstOverload.current = false
 
-    setUICanvasImageBytes(initialUICanvasImageBytes)
-    setOffscreenCanvasImageBytes(initialOffscreenCanvasImageBytes)
+    setUICanvasImageData(initialUICanvasImageData)
+    setOffscreenCanvasImageData(initialOffscreenCanvasImageData)
 
-    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
-    const { width: offscreenWidth, height: offscreenHeight } = offscreenCanvas.current
+    addUILog(initialUICanvasImageData)
 
-    addUILog({
-      imageBytes: initialUICanvasImageBytes,
-      canvasWidth: UICanvasWidth,
-      canvasHeight: UICanvasHeight
-    })
-
-    addOffscreenLog({
-      imageBytes: initialOffscreenCanvasImageBytes,
-      canvasWidth: offscreenWidth,
-      canvasHeight: offscreenHeight
+    const startingLogs = await addLog({
+      prevLogs: [],
+      imageData: initialOffscreenCanvasImageData
     })
 
     enqueueTask.current = getTaskGluer({
-      initialImageBytes: initialOffscreenCanvasImageBytes,
-      lastImageBytesHandler: (lastImageBytes, type) => {
-        setOffscreenCanvasImageBytes(lastImageBytes)
-
-        const { width: newOffscreenCanvasWidth, height: newOffscreenCanvasHeight } = offscreenCanvas.current!
-        const { width: newUICanvasWidth, height: newUICanvasHeight } = UICanvas.current!
-
-        const scaling = newUICanvasWidth / newOffscreenCanvasWidth
-
-        if (taskRunningChecker.isQueueClear && scaling > 3 / 17) {
-          // to ensure that the image quality of UICanvas is the highest
-          const { scalingImageBytes } = getScalingImageBytes({
-            imageBytes: lastImageBytes,
-            canvasWidth: newOffscreenCanvasWidth,
-            canvasHeight: newOffscreenCanvasHeight,
-            scaling
-          })
-
-          if (scalingImageBytes instanceof Uint8Array) {
-            const supportedByteLength = newUICanvasWidth * newUICanvasHeight * 4
-
-            // to prevent image bytes from going out of bounds
-            const newUICanvasImageBytes = scalingImageBytes.slice(0, supportedByteLength)
-
-            setUICanvasImageBytes(newUICanvasImageBytes)
-          }
-        }
-
-        if (type === IMAGE_BYTES_ACTION_TYPES.RESTORE) return
-
-        return addOffscreenLog({
-          imageBytes: lastImageBytes,
-          canvasWidth: newOffscreenCanvasWidth,
-          canvasHeight: newOffscreenCanvasHeight
+      startingImageData: initialOffscreenCanvasImageData,
+      startingLogs: [startingLogs[0]],
+      latestImageDataHandler: async ({ updatedImageData, action, prevLogs }) => {
+        const { updatedLogs } = await offscreenCanvasImageDataHandler({
+          action,
+          prevLogs,
+          updatedImageData
         })
+
+        return { updatedLogs }
       }
     })
-  }, [UICanvas, offscreenCanvas, taskRunningChecker, setOffscreenCanvasImageBytes, setUICanvasImageBytes, addUILog, addOffscreenLog])
+  }, [setOffscreenCanvasImageData, setUICanvasImageData, addUILog, addLog, offscreenCanvasImageDataHandler])
 
   const clearCanvas = useCallback(() => {
     const terminateWorkerEvent = new Event(EVENTS.TERMINATE_OFFSCREEN_CANVAS_WORKER)
@@ -129,23 +79,20 @@ export function useActionMiddleware () {
     UICanvasContext2D.current = null
     offscreenCanvasContext2D.current = null
 
-    setUICanvasImageBytes(initialImageBytes)
-    setOffscreenCanvasImageBytes(initialImageBytes)
-  }, [offscreenCanvas, UICanvasContext2D, offscreenCanvasContext2D, setUICanvasImageBytes, setOffscreenCanvasImageBytes])
+    setUICanvasImageData(null)
+    setOffscreenCanvasImageData(null)
+  }, [offscreenCanvas, UICanvasContext2D, offscreenCanvasContext2D, setUICanvasImageData, setOffscreenCanvasImageData])
 
-  const actionMiddleware = useCallback(async <T extends IMAGE_BYTES_ACTION_TYPES>(
+  const actionMiddleware = useCallback(async <T extends IMAGE_DATA_ACTION_TYPES>(
     { type, payload }: Action<T>,
-    fn?: Cb
+    modifier?: ModifierCallback
   ) => {
     if (isFirstOverload.current ||
       !enqueueTask.current ||
       isMiddlewareBlocked.current ||
-      !UICanvas.current ||
-      !offscreenCanvas.current) return
+      !UICanvasImageData) return
 
     isMiddlewareBlocked.current = true
-
-    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
 
     let UIPayload, offscreenPayload
 
@@ -161,26 +108,17 @@ export function useActionMiddleware () {
 
     const UIAction = { type, payload: UIPayload } as ReducerAction
 
-    let result
-
-    const UICanvasDimensions = {
-      canvasWidth: UICanvasWidth,
-      canvasHeight: UICanvasHeight
-    }
+    let updatedUICanvasImageData: ImageData
 
     try {
-      result = await getUpdatedImageBytes({
-        state: UICanvasImageBytes,
-        action: UIAction,
-        canvasDimensions: UICanvasDimensions
-      })
-
-      if (result instanceof Error) throw result
+      updatedUICanvasImageData = await getUpdatedImageData(UICanvasImageData, UIAction)
     } catch (err) {
       isMiddlewareBlocked.current = false
 
       if (err instanceof Error) {
-        if (err.name === 'InternetConnectionDownException') return dispatchWarning(err.message)
+        if (err.name === 'InternetConnectionDownException') {
+          return dispatchWarning(err.message)
+        }
 
         return dispatchWarning('Something went wrong.')
       }
@@ -188,41 +126,24 @@ export function useActionMiddleware () {
       return
     }
 
-    setUICanvasImageBytes(result)
+    const interceptedImageData = modifier
+      ? await modifier(
+        updatedUICanvasImageData,
+        USABLE_CANVAS.UICANVAS
+      ) ?? updatedUICanvasImageData
+      : updatedUICanvasImageData
 
-    if (fn) await fn(UICanvas.current)
-
-    // when restore, not add a new log
-    if (type !== IMAGE_BYTES_ACTION_TYPES.RESTORE) {
-      const { width, height } = UICanvas.current
-      addUILog({
-        imageBytes: result,
-        canvasWidth: width,
-        canvasHeight: height
-      })
-    }
-
-    const getOffscreenCanvasDimensions = () => {
-      const { width, height } = offscreenCanvas.current!
-      return { canvasWidth: width, canvasHeight: height }
-    }
-
-    const offscreenQueuedFn = async () => {
-      if (fn) {
-        await fn(offscreenCanvas.current!)
-      }
-    }
+    await UICanvasImageDataHandler({ action: UIAction, updatedImageData: interceptedImageData })
 
     const offscreenAction = { type, payload: offscreenPayload } as ReducerAction
 
     enqueueTask.current({
       action: offscreenAction,
-      getCanvasDimensions: getOffscreenCanvasDimensions,
-      queuedFn: offscreenQueuedFn
+      modifierFn: modifier
     })
 
     isMiddlewareBlocked.current = false
-  }, [UICanvas, offscreenCanvas, UICanvasImageBytes, setUICanvasImageBytes, addUILog])
+  }, [UICanvasImageData, UICanvasImageDataHandler])
 
   return { setInitialCharge, clearCanvas, actionMiddleware }
 }

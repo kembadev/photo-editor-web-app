@@ -14,13 +14,15 @@ export function useUICanvas () {
     UICanvas,
     UICanvasContext2D,
     UICanvasContainer,
-    UICanvasImageBytes
+    UICanvasImageData,
+    setUICanvasImageData
   } = context
 
   return {
     UICanvas,
     UICanvasContext2D,
     UICanvasContainer,
-    UICanvasImageBytes
+    UICanvasImageData,
+    setUICanvasImageData
   }
 }

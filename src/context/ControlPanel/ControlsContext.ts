@@ -1,7 +1,7 @@
 import { type FnDefType } from '../../types/types.ts'
 import { type RESTORE, type DIRECTION, type FILTERS } from '../../consts.ts'
 import { type InitialCharge } from '../../hooks/ControlPanel/useActionMiddleware.ts'
-import { type cropPayload } from '../../reducer-like/ImageBytes.ts'
+import { type cropPayload } from '../../reducer-like/ImageData.ts'
 
 import { createContext } from 'react'
 

@@ -12,7 +12,7 @@ import { useUICanvas } from '../../hooks/Canvas/useUICanvas.ts'
 import { useOffscreenCanvas } from '../../hooks/Canvas/useOffscreenCanvas.ts'
 import { useControls } from '../../hooks/ControlPanel/useControls.ts'
 
-import { getClippedImageBytes } from '../../methods/getClippedImageBytes.ts'
+import { getClippedImageData } from '../../methods/getClippedImageData.ts'
 import { doUintsMatch } from '../../common/helpers/doUintsMatch.ts'
 
 import { ImageError } from '../../error-handling/ImageError.ts'
@@ -56,8 +56,8 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
 
   const { cropCanvas } = useControls()
 
-  const { UICanvas, UICanvasImageBytes } = useUICanvas()
-  const { offscreenCanvas } = useOffscreenCanvas()
+  const { UICanvas, UICanvasImageData } = useUICanvas()
+  const { offscreenCanvasImageData } = useOffscreenCanvas()
 
   const overlayCanvas = useRef<HTMLCanvasElement>(null)
 
@@ -112,7 +112,9 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
   }, [])
 
   const handleOnGridMove = useCallback((e: PointerEvent) => {
-    if (!isTheGridAllowedToMove || !UICanvas.current || e.target !== e.currentTarget) return
+    if (!isTheGridAllowedToMove || !UICanvasImageData || e.target !== e.currentTarget) return
+
+    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvasImageData
 
     const pointerPosition = getPointerPositionOnCanvas(e)
 
@@ -127,8 +129,6 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
     const displacementInY = currentPositionY - prevPositionY
 
     if (displacementInX === 0 && displacementInY === 0) return
-
-    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
 
     const updatedGridSizeAndOffset = { ...gridSizeAndOffset }
 
@@ -157,7 +157,7 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
     }
 
     setGridSizeAndOffset(updatedGridSizeAndOffset)
-  }, [isTheGridAllowedToMove, UICanvas, getPointerPositionOnCanvas, gridSizeAndOffset])
+  }, [isTheGridAllowedToMove, UICanvasImageData, getPointerPositionOnCanvas, gridSizeAndOffset])
 
   // grid resizing
 
@@ -176,11 +176,10 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
   }, [])
 
   const handleOnGridResizing = useCallback(({ e, corner }: HandleOnGridResizingProps) => {
-    if (!isChangingTheGridSizeAllowed ||
-      !UICanvas.current ||
-      !offscreenCanvas.current) return
+    if (!isChangingTheGridSizeAllowed || !UICanvasImageData || !offscreenCanvasImageData) return
 
-    const { width: offscreenCanvasWidth, height: offscreenCanvasHeight } = offscreenCanvas.current
+    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvasImageData
+    const { width: offscreenCanvasWidth, height: offscreenCanvasHeight } = offscreenCanvasImageData
 
     if (offscreenCanvasWidth <= 16 || offscreenCanvasHeight <= 16) return
 
@@ -199,8 +198,6 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
     if (displacementInX === 0 && displacementInY === 0) return
 
     const updatedGridSizeAndOffset = { ...gridSizeAndOffset }
-
-    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
 
     const { sx: prevSX, dw: prevDW } = gridSizeAndOffset.width
     const { sy: prevSY, dh: prevDH } = gridSizeAndOffset.height
@@ -259,12 +256,12 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
     if (updatedSX + updatedDW > UICanvasWidth || updatedSY + updatedDH > UICanvasHeight) return
 
     setGridSizeAndOffset(updatedGridSizeAndOffset)
-  }, [isChangingTheGridSizeAllowed, UICanvas, offscreenCanvas, getPointerPositionOnCanvas, gridSizeAndOffset])
+  }, [isChangingTheGridSizeAllowed, UICanvasImageData, offscreenCanvasImageData, getPointerPositionOnCanvas, gridSizeAndOffset])
 
   const crop = useCallback(() => {
-    if (!UICanvas.current) return
+    if (!UICanvasImageData) return
 
-    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
+    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvasImageData
 
     const { sx, dw } = gridSizeAndOffset.width
     const { sy, dh } = gridSizeAndOffset.height
@@ -277,20 +274,19 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
       proportionOfWidth: dw / UICanvasWidth,
       proportionOfHeight: dh / UICanvasHeight
     })
-  }, [UICanvas, cropCanvas, gridSizeAndOffset])
+  }, [UICanvasImageData, cropCanvas, gridSizeAndOffset])
 
   const onToggleTool = useCallback((e: CustomEvent<AvailableToolsNames>) => {
     if (currentToolSelected === 'Crop' && e.detail !== 'Crop') crop()
   }, [currentToolSelected, crop])
 
   const onAspectRatioChange = useCallback((e: CustomEvent<AspectRatio>) => {
-    if (!UICanvas.current || !offscreenCanvas.current) return
+    if (!UICanvasImageData || !offscreenCanvasImageData) return
 
-    const { width: offscreenCanvasWidth, height: offscreenCanvasHeight } = offscreenCanvas.current
+    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvasImageData
+    const { width: offscreenCanvasWidth, height: offscreenCanvasHeight } = offscreenCanvasImageData
 
     if (offscreenCanvasWidth <= 16 || offscreenCanvasHeight <= 16) return
-
-    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
 
     const { aspectRatio } = e.detail
 
@@ -322,7 +318,7 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
       width: { sx: 0, dw: UICanvasWidth },
       height: { sy: newSY, dh: newHeight }
     })
-  }, [UICanvas, offscreenCanvas])
+  }, [UICanvasImageData, offscreenCanvasImageData])
 
   useEffect(() => {
     window.addEventListener(EVENTS.TOGGLE_TOOL, onToggleTool as EventListener)
@@ -341,19 +337,22 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
   }, [onAspectRatioChange])
 
   useEffect(() => {
-    if (UICanvasImageBytes.byteLength === 0 ||
-      !UICanvas.current) return
+    if (!UICanvasImageData) return
+
+    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvasImageData
 
     setGridSizeAndOffset({
-      width: { sx: 0, dw: UICanvas.current.width },
-      height: { sy: 0, dh: UICanvas.current.height }
+      width: { sx: 0, dw: UICanvasWidth },
+      height: { sy: 0, dh: UICanvasHeight }
     })
-  }, [UICanvas, UICanvasImageBytes])
+  }, [UICanvasImageData])
 
   useLayoutEffect(() => {
-    if (UICanvasImageBytes.byteLength === 0 ||
-      !UICanvas.current ||
-      !overlayCanvas.current) return
+    if (!UICanvasImageData || !overlayCanvas.current) return
+
+    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvasImageData
+
+    const UICanvasImageBytes = new Uint8Array(UICanvasImageData.data.buffer)
 
     if (!doUintsMatch(UICanvasImageBytes, prevUICanvasImageBytes.current)) {
       prevUICanvasImageBytes.current = UICanvasImageBytes
@@ -368,8 +367,6 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
     if (dw === 0 || dh === 0) return
 
     const isAnyMeasurementOfGridInvalid = [sx, sy, dw, dh].some(p => p < 0)
-
-    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
 
     const isGridWidthOutOfBounds = sx + dw > UICanvasWidth
     const isGridHeightOutOfBounds = sy + dh > UICanvasHeight
@@ -388,10 +385,8 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
 
     prevGridSizeAndOffset.current = gridSizeAndOffset
 
-    const clippedImageBytes = getClippedImageBytes({
-      imageBytesToCut: UICanvasImageBytes,
-      widthOfImgToCut: UICanvasWidth,
-      heightOfImgToCut: UICanvasHeight,
+    const clippedImageData = getClippedImageData({
+      imageDataToCut: UICanvasImageData,
       requirements: {
         finalWidth: dw,
         finalHeight: dh,
@@ -407,17 +402,15 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
 
     const overlayCtx = overlayCanvas.current.getContext('2d')!
 
-    const imageData = overlayCtx.createImageData(dw, dh)
-    imageData.data.set(clippedImageBytes)
-    overlayCtx.putImageData(imageData, 0, 0)
-  }, [gridSizeAndOffset, UICanvasImageBytes, UICanvas])
+    overlayCtx.putImageData(clippedImageData, 0, 0)
+  }, [gridSizeAndOffset, UICanvasImageData])
 
   return (
     <div
       className="overlay-canvas"
       style={{
-        width: `${UICanvas.current?.width ?? 0}px`,
-        height: `${UICanvas.current?.height ?? 0}px`
+        width: `${UICanvasImageData ? UICanvasImageData.width : 0}px`,
+        height: `${UICanvasImageData ? UICanvasImageData.height : 0}px`
       }}
     >
       <section
@@ -463,16 +456,16 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
             ))
           }
         </div>
-        <canvas
-          ref={overlayCanvas}
-        />
+        <canvas ref={overlayCanvas} />
       </section>
       {
         (
-          gridSizeAndOffset.width.sx !== 0 ||
-          (gridSizeAndOffset.width.dw !== UICanvas.current?.width && gridSizeAndOffset.width.dw !== 0) ||
-          gridSizeAndOffset.height.sy !== 0 ||
-          (gridSizeAndOffset.height.dh !== UICanvas.current?.height && gridSizeAndOffset.width.dw !== 0)
+          UICanvasImageData
+            ? gridSizeAndOffset.width.sx !== 0 ||
+              (gridSizeAndOffset.width.dw !== UICanvasImageData.width && gridSizeAndOffset.width.dw !== 0) ||
+              gridSizeAndOffset.height.sy !== 0 ||
+              (gridSizeAndOffset.height.dh !== UICanvasImageData.height && gridSizeAndOffset.width.dw !== 0)
+            : false
         ) && (
           <button
             className='overlay-canvas__btn--crop'

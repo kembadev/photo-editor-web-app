@@ -13,12 +13,14 @@ export function useOffscreenCanvas () {
   const {
     offscreenCanvas,
     offscreenCanvasContext2D,
-    offscreenCanvasImageBytes
+    offscreenCanvasImageData,
+    setOffscreenCanvasImageData
   } = context
 
   return {
     offscreenCanvas,
     offscreenCanvasContext2D,
-    offscreenCanvasImageBytes
+    offscreenCanvasImageData,
+    setOffscreenCanvasImageData
   }
 }

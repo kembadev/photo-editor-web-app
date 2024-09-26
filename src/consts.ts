@@ -31,6 +31,11 @@ export enum RESTORE {
   REDO = 'REDO'
 }
 
+export enum USABLE_CANVAS {
+  UICANVAS = 'UICANVAS',
+  DOWNLOADABLE_CANVAS = 'DOWNLOADABLE_CANVAS'
+}
+
 export enum FILTERS {
   GRAY_SCALE = 'GRAY_SCALE',
   SEPIA = 'SEPIA',

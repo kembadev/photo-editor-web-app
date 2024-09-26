@@ -1,16 +1,14 @@
-import { type FnDefType } from '../../types/types.ts'
+import { createContext, Dispatch, MutableRefObject, SetStateAction } from 'react'
 
-import { createContext, MutableRefObject } from 'react'
-
-export type OffscreenCanvasType = OffscreenCanvas | null
-
-export type OffscreenCanvasContext2DType = OffscreenCanvasRenderingContext2D | null
+export type OffscreenCanvasRef = OffscreenCanvas | null
+export type OffscreenCanvasContext2DRef = OffscreenCanvasRenderingContext2D | null
+export type OffscreenCanvasImageDataState = ImageData | null
 
 export interface OffscreenCanvasContextValue {
-  offscreenCanvas: MutableRefObject<OffscreenCanvasType>;
-  offscreenCanvasContext2D: MutableRefObject<OffscreenCanvasContext2DType>;
-  offscreenCanvasImageBytes: Uint8Array;
-  setOffscreenCanvasImageBytes: FnDefType<Uint8Array>
+  offscreenCanvas: MutableRefObject<OffscreenCanvasRef>;
+  offscreenCanvasContext2D: MutableRefObject<OffscreenCanvasContext2DRef>;
+  offscreenCanvasImageData: OffscreenCanvasImageDataState;
+  setOffscreenCanvasImageData: Dispatch<SetStateAction<OffscreenCanvasImageDataState>>
 }
 
 export const OffscreenCanvasContext = createContext<OffscreenCanvasContextValue | undefined>(undefined)

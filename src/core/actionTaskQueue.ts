@@ -1,21 +1,18 @@
-import { type FnDefType } from '../types/types.ts'
-import { type ReducerAction, type CanvasDimensions, IMAGE_BYTES_ACTION_TYPES } from '../reducer-like/ImageBytes.ts'
+import { type ReducerAction, IMAGE_DATA_ACTION_TYPES } from '../reducer-like/ImageData.ts'
 import { type Log } from '../context/Editor/LogsProvider.tsx'
 import { type Message } from '../dedicated-workers/offscreenCanvas.ts'
+import { type ModifierCallback } from '../hooks/ControlPanel/useActionMiddleware.ts'
 
-import { EVENTS } from '../consts.ts'
+import { EVENTS, USABLE_CANVAS } from '../consts.ts'
 import { IS_DEVELOPMENT } from '../config.ts'
 
 import { TaskQueue } from '../utils/TaskQueue.ts'
 
 import OffscreenCanvasWorker from '../dedicated-workers/offscreenCanvas.ts?worker'
 
-type QueuedCallback = () => Promise<void>
-
 interface EnqueueTaskProps {
-  action: ReducerAction,
-  getCanvasDimensions: () => CanvasDimensions,
-  queuedFn: QueuedCallback
+  action: ReducerAction;
+  modifierFn: ModifierCallback
 }
 
 const queue = new TaskQueue<EnqueueTaskProps>()
@@ -28,11 +25,46 @@ const dispatchTaskProcessingEvent = () => {
   window.dispatchEvent(taskProcessingEvent)
 }
 
-type LastImageBytesHandler = (
-  latestImageBytes: Uint8Array, type: IMAGE_BYTES_ACTION_TYPES
-) => Promise<Log[]> | void
+type StartingLogs = [Log]
 
-function getTaskProcessor (lastImageBytesHandler: LastImageBytesHandler) {
+interface LatestImageDataHandlerProps {
+  updatedImageData: ImageData;
+  action: ReducerAction;
+  prevLogs: Log[]
+}
+
+type LatestImageBytesReturn = { updatedLogs: Log[] }
+
+type LatestImageDataHandler = (
+  handlerProps: LatestImageDataHandlerProps
+) => Promise<LatestImageBytesReturn> | LatestImageBytesReturn
+
+type TypedArray = Uint8Array | Uint16Array | Uint8ClampedArray | Uint32Array | Int8Array | Int16Array | Int32Array | Float32Array | Float64Array | BigUint64Array | BigInt64Array
+
+function isTypedArray (value: unknown): value is TypedArray {
+  return ArrayBuffer.isView(value) && !(value instanceof DataView)
+}
+
+function replaceTypedArrayRecursively (value: unknown): unknown {
+  if (isTypedArray(value)) return value.constructor.name
+
+  if (Array.isArray(value)) {
+    return value.map(v => replaceTypedArrayRecursively(v))
+  }
+
+  if (value === null || typeof value !== 'object') return value
+
+  const obj = value as Record<string, unknown>
+  const newObj = { ...obj }
+
+  for (const key in value) {
+    newObj[key] = replaceTypedArrayRecursively(obj[key])
+  }
+
+  return newObj
+}
+
+function getTaskProcessor (startingLogs: StartingLogs, latestImageDataHandler: LatestImageDataHandler) {
   const worker = new OffscreenCanvasWorker({
     name: 'OFFSCREEN_CANVAS_WORKER'
   })
@@ -46,103 +78,109 @@ function getTaskProcessor (lastImageBytesHandler: LastImageBytesHandler) {
 
   let isFirstJob = true
   let isTaskRunning = false
-  let latestImageBytes: Uint8Array
-  let logs: Log[]
+  let latestImageData: ImageData
+  let logs: Log[] = []
 
   let itemIndex = 0
 
-  return (prevImageBytes: Uint8Array) => {
+  return async (imageData: ImageData) => {
     if (queue.getTasksLength() === 0 || isTaskRunning) return
 
     const tick = performance.now()
 
-    if (isFirstJob) {
-      isFirstJob = false
-      latestImageBytes = prevImageBytes
-    }
-
     isTaskRunning = true
 
-    const { action, getCanvasDimensions, queuedFn } = queue.dequeue()!
+    if (isFirstJob) {
+      isFirstJob = false
 
-    if (action.type === IMAGE_BYTES_ACTION_TYPES.RESTORE) {
-      const { indexOfDesiredLog } = action.payload
-      const { compressedImageBytes: offscreenCompressedImageBytes } = logs[indexOfDesiredLog].data
-
-      action.payload.compressedImageBytes = offscreenCompressedImageBytes
+      latestImageData = imageData
+      logs = startingLogs
     }
 
-    const message: Message = {
-      latestImageBytes,
-      action,
-      canvasDimensions: getCanvasDimensions()
+    const { action, modifierFn } = queue.dequeue()!
+
+    if (action.type === IMAGE_DATA_ACTION_TYPES.RESTORE) {
+      const { newIndexOfCurrentState } = action.payload
+
+      action.payload.logData = logs[newIndexOfCurrentState].data
     }
+
+    const message: Message = { latestImageData, action }
 
     worker.postMessage(message)
 
-    worker.onmessage = async (e: MessageEvent<ArrayBufferLike>) => {
-      const newOffscreenCanvasImageBytes = new Uint8Array(e.data)
+    worker.onmessage = async (e: MessageEvent<ImageData>) => {
+      const newImageData = e.data
 
-      // function for last effects, e.g. to change the offscreenCanvas dimensions
-      await queuedFn()
+      const interceptedImageData = modifierFn
+        ? await modifierFn(
+          newImageData,
+          USABLE_CANVAS.DOWNLOADABLE_CANVAS
+        ) ?? newImageData
+        : newImageData
 
-      // to use the received image bytes, e.g. setOffscreenImageBytes(newImageBytes)
-      // and get the updated offscreenLogs
-      logs = await lastImageBytesHandler(newOffscreenCanvasImageBytes, action.type) || logs
+      // to use the received ImageData, e.g. setOffscreenImageData(interceptedImageData)
+      // and get the updated logs
+      const { updatedLogs } = await latestImageDataHandler({
+        updatedImageData: interceptedImageData,
+        action,
+        prevLogs: logs
+      })
+
+      logs = updatedLogs
 
       isTaskRunning = false
-      latestImageBytes = newOffscreenCanvasImageBytes
+      latestImageData = interceptedImageData
 
       if (IS_DEVELOPMENT) {
-        if (itemIndex % 5 === 0 && itemIndex !== 0) console.clear()
-
-        const { type } = action
+        if (itemIndex % 7 === 0 && itemIndex !== 0) console.clear()
         const tock = performance.now()
 
         let actionPayload
 
         if ('payload' in action) {
-          actionPayload = action.payload as Record<string, unknown>
-
-          for (const key in actionPayload) {
-            if (actionPayload[key] instanceof Uint8Array) {
-              actionPayload[key] = 'Uint8Array'
-            }
-          }
+          actionPayload = action.payload === undefined
+            ? undefined
+            : replaceTypedArrayRecursively({ ...action.payload })
         }
 
+        const { width, height, data } = interceptedImageData
+        const newImageDataInfo = JSON.stringify({ width, height, dataByteLength: data.byteLength }, null, 2)
+
         console.info(`
-          Task number ${++itemIndex}. Action type: ${type}.
-          ${actionPayload ? JSON.stringify({ payload: actionPayload }, null, 2) : ''}
+          Task number ${++itemIndex}. Action type: ${action.type}.
+          ${actionPayload ? JSON.stringify({ payload: actionPayload }, null, 2) : 'No payload'}
           Processing time: ${tock - tick}ms.
-          Bytelength of new offscreenCanvasImageBytes: ${newOffscreenCanvasImageBytes.byteLength}.
+          newImageData: ${newImageDataInfo}.
         `)
       }
 
       dispatchTaskProcessingEvent()
 
-      processNextTask(newOffscreenCanvasImageBytes)
+      processNextTask(interceptedImageData)
     }
   }
 }
 
 export type EnqueueTask = (task: EnqueueTaskProps) => void
 
-type GetTaskGluerProps = {
-  initialImageBytes: Uint8Array;
-  lastImageBytesHandler: LastImageBytesHandler
+interface GetTaskGluerProps {
+  startingImageData: ImageData;
+  startingLogs: [Log];
+  latestImageDataHandler: LatestImageDataHandler
 }
 
 type GetTaskGluer = (props: GetTaskGluerProps) => EnqueueTask
 
-let processNextTask: FnDefType<Uint8Array>
+let processNextTask: (imageData: ImageData) => Promise<void>
 
-export const getTaskGluer: GetTaskGluer = ({ initialImageBytes, lastImageBytesHandler }) => {
-  processNextTask = getTaskProcessor(lastImageBytesHandler)
+export const getTaskGluer: GetTaskGluer = ({ startingImageData, startingLogs, latestImageDataHandler }) => {
+  processNextTask = getTaskProcessor(startingLogs, latestImageDataHandler)
 
   return (task) => {
     queue.enqueue(task)
     dispatchTaskProcessingEvent()
-    processNextTask(initialImageBytes)
+
+    processNextTask(startingImageData)
   }
 }

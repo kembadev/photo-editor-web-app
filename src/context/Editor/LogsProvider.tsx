@@ -1,9 +1,9 @@
 import { createContext, ReactNode, useState, Dispatch, SetStateAction } from 'react'
 
 export interface LogData {
-  compressedImageBytes: Uint8Array;
-  canvasWidth: number;
-  canvasHeight: number
+  width: number;
+  height: number;
+  compressedImageBytes: Uint8Array
 }
 
 export interface Log {
@@ -11,26 +11,19 @@ export interface Log {
   data: LogData
 }
 
-export type SetLogs = Dispatch<SetStateAction<Log[]>>
-
 interface LogsContextType {
   UILogs: Log[];
-  setUILogs: SetLogs;
-  offscreenLogs: Log[];
-  setOffscreenLogs: SetLogs
+  setUILogs: Dispatch<SetStateAction<Log[]>>
 }
 
 export const LogsContext = createContext<LogsContextType | undefined>(undefined)
 
 export default function LogsProvider ({ children }: { children: ReactNode }) {
   const [UILogs, setUILogs] = useState<Log[]>([])
-  const [offscreenLogs, setOffscreenLogs] = useState<Log[]>([])
 
   const value = {
     UILogs,
-    setUILogs,
-    offscreenLogs,
-    setOffscreenLogs
+    setUILogs
   }
 
   return (

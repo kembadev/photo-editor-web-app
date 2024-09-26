@@ -28,12 +28,14 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
 
   const {
     UICanvas,
-    UICanvasContainer
+    UICanvasContext2D,
+    UICanvasContainer,
+    UICanvasImageData
   } = useUICanvas()
   const {
     offscreenCanvas,
     offscreenCanvasContext2D,
-    offscreenCanvasImageBytes
+    offscreenCanvasImageData
   } = useOffscreenCanvas()
 
   const onToggleTool = useCallback((e: CustomEvent<AvailableToolsNames>) => {
@@ -52,17 +54,29 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
     }
   }, [currentToolSelected, restoreZoom, toggleTool, onToggleTool])
 
-  useLayoutEffect(() => {
-    if (offscreenCanvasImageBytes.byteLength === 0 ||
+  useEffect(() => {
+    if (!offscreenCanvasImageData ||
       !offscreenCanvas.current ||
       !offscreenCanvasContext2D.current) return
 
-    const { width, height } = offscreenCanvas.current
+    const { width: offscreenCanvasWidth, height: offscreenCanvasHeight } = offscreenCanvasImageData
 
-    const imageData = offscreenCanvasContext2D.current.createImageData(width, height)
-    imageData.data.set(offscreenCanvasImageBytes)
-    offscreenCanvasContext2D.current.putImageData(imageData, 0, 0)
-  }, [offscreenCanvasImageBytes, offscreenCanvas, offscreenCanvasContext2D])
+    offscreenCanvas.current.width = offscreenCanvasWidth
+    offscreenCanvas.current.height = offscreenCanvasHeight
+
+    offscreenCanvasContext2D.current.putImageData(offscreenCanvasImageData, 0, 0)
+  }, [offscreenCanvasImageData, offscreenCanvas, offscreenCanvasContext2D])
+
+  useLayoutEffect(() => {
+    if (!UICanvasImageData || !UICanvas.current || !UICanvasContext2D.current) return
+
+    const { width, height } = UICanvasImageData
+
+    UICanvas.current.width = width
+    UICanvas.current.height = height
+
+    UICanvasContext2D.current.putImageData(UICanvasImageData, 0, 0)
+  }, [UICanvasImageData, UICanvasContext2D, UICanvas])
 
   return (
     <>
@@ -81,8 +95,9 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
         <div
           className='transparent-background'
           style={{
-            width: isBannerVisible ? UICanvas.current?.width : 0,
-            height: isBannerVisible ? UICanvas.current?.height : 0
+            opacity: isBannerVisible ? 1 : 0,
+            width: UICanvasImageData ? UICanvasImageData.width : 0,
+            height: UICanvasImageData ? UICanvasImageData.height : 0
           }}
         />
         <button

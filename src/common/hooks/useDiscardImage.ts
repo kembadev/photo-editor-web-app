@@ -6,13 +6,13 @@ import { useLogs } from './useLogs.ts'
 export function useDiscardImage () {
   const { clearCanvas } = useControls()
   const { setProvidedImgFile } = useImageFile()
-  const { clearLogs } = useLogs()
+  const { clearUILogs } = useLogs()
 
   const discardImage = useCallback(() => {
     clearCanvas()
     setProvidedImgFile(null)
-    clearLogs()
-  }, [clearCanvas, setProvidedImgFile, clearLogs])
+    clearUILogs()
+  }, [clearCanvas, setProvidedImgFile, clearUILogs])
 
   return { discardImage }
 }

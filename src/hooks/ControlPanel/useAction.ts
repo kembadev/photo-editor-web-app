@@ -1,67 +1,57 @@
 import { type DIRECTION, RESTORE, type FILTERS } from '../../consts.ts'
-import { IMAGE_BYTES_ACTION_TYPES, type cropPayload } from '../../reducer-like/ImageBytes.ts'
+import { IMAGE_DATA_ACTION_TYPES, type cropPayload } from '../../reducer-like/ImageData.ts'
+
+import { USABLE_CANVAS } from '../../consts.ts'
 
 import { useActionMiddleware } from './useActionMiddleware.ts'
 import { useLogs } from '../../common/hooks/useLogs.ts'
 import { useUICanvas } from '../Canvas/useUICanvas.ts'
 
 import { getImageResize } from '../../methods/getImageResize.ts'
+import { getScaledImageData } from '../../methods/getScaledImage.ts'
 
 export function useAction () {
   const { setInitialCharge, clearCanvas, actionMiddleware } = useActionMiddleware()
-  const {
-    getIndexOfDesiredLog,
-    getUILog,
-    restoreUI,
-    restoreOffscreen
-  } = useLogs()
+  const { UILogs, getIndexOfLogOnRestore } = useLogs()
 
-  const { UICanvas, UICanvasContainer } = useUICanvas()
+  const { UICanvasContainer } = useUICanvas()
 
   const restoreCanvas = async (restoreType: RESTORE) => {
-    const indexOfDesiredLog = await getIndexOfDesiredLog(restoreType)
+    const indexOfDesiredLog = getIndexOfLogOnRestore(restoreType)
 
     if (indexOfDesiredLog === null) return
 
-    const UILog = await getUILog(indexOfDesiredLog)
-    const { compressedImageBytes: UICompressedImageBytes } = UILog.data
+    const offscreenLogDataMock = {
+      width: 0,
+      height: 0,
+      compressedImageBytes: new Uint8Array()
+    }
 
     actionMiddleware({
-      type: IMAGE_BYTES_ACTION_TYPES.RESTORE,
+      type: IMAGE_DATA_ACTION_TYPES.RESTORE,
       payload: [
         {
-          compressedImageBytes: UICompressedImageBytes,
-          indexOfDesiredLog
+          logData: UILogs[indexOfDesiredLog].data,
+          newIndexOfCurrentState: indexOfDesiredLog
         },
         {
-          compressedImageBytes: new Uint8Array(), // this value will be replaced later
-          indexOfDesiredLog
+          logData: offscreenLogDataMock, // this value will be replaced later
+          newIndexOfCurrentState: indexOfDesiredLog
         }
       ]
-    }, (canvas) => {
-      if (canvas instanceof OffscreenCanvas) {
-        return restoreOffscreen(indexOfDesiredLog)
-      }
-
-      restoreUI(indexOfDesiredLog)
     })
   }
 
   const invertCanvas = () => {
     actionMiddleware({
-      type: IMAGE_BYTES_ACTION_TYPES.INVERT
+      type: IMAGE_DATA_ACTION_TYPES.INVERT
     })
   }
 
   const rotateCanvas = (direction: DIRECTION) => {
     actionMiddleware({
-      type: IMAGE_BYTES_ACTION_TYPES.ROTATE,
+      type: IMAGE_DATA_ACTION_TYPES.ROTATE,
       payload: { direction }
-    }, (canvas) => {
-      const { width, height } = canvas
-
-      canvas.width = height
-      canvas.height = width
     })
   }
 
@@ -72,43 +62,32 @@ export function useAction () {
       return
     }
 
-    const { proportionOfWidth, proportionOfHeight } = proportions
-
-    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current!
-    const { offsetWidth: containerWidth, offsetHeight: containerHeight } = UICanvasContainer.current!
-
-    const widthOfClippedImage = UICanvasWidth * proportionOfWidth
-    const heightOfClippedImage = UICanvasHeight * proportionOfHeight
-
-    const { scaleX, scaleY } = getImageResize({
-      originalWidth: widthOfClippedImage,
-      originalHeight: heightOfClippedImage,
-      containerWidth,
-      containerHeight
-    })
-
     actionMiddleware({
-      type: IMAGE_BYTES_ACTION_TYPES.CROP,
-      payload: [{ ...proportions, scaling: (scaleX + scaleY) / 2 }, proportions]
-    }, (canvas) => {
-      if (canvas instanceof OffscreenCanvas) {
-        const { width, height } = canvas
+      type: IMAGE_DATA_ACTION_TYPES.CROP,
+      payload: proportions
+    }, (clippedImageData, usingCanvas) => {
+      if (usingCanvas === USABLE_CANVAS.DOWNLOADABLE_CANVAS) return
 
-        canvas.width = width * proportionOfWidth
-        canvas.height = height * proportionOfHeight
+      const { width: widthOfClippedImageData, height: heightOfClippedImageData } = clippedImageData
+      const { offsetWidth: containerWidth, offsetHeight: containerHeight } = UICanvasContainer.current!
 
-        return
-      }
+      const { scaleX, scaleY } = getImageResize({
+        originalWidth: widthOfClippedImageData,
+        originalHeight: heightOfClippedImageData,
+        containerWidth,
+        containerHeight
+      })
 
-      // UICanvas resizing
-      canvas.width = scaleX * widthOfClippedImage
-      canvas.height = scaleY * heightOfClippedImage
+      const scale = (scaleX + scaleY) / 2
+      const { scaledImageData } = getScaledImageData(clippedImageData, scale)
+
+      return scaledImageData
     })
   }
 
   const applyFilter = (filter: FILTERS) => {
     actionMiddleware({
-      type: IMAGE_BYTES_ACTION_TYPES.FILTER,
+      type: IMAGE_DATA_ACTION_TYPES.FILTER,
       payload: { filter }
     })
   }

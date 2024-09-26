@@ -1,21 +1,19 @@
-import { initialImageBytes } from '../../reducer-like/ImageBytes.ts'
-
-import { UICanvasContext, type UICanvasContext2DType } from './UICanvasContext.ts'
+import { UICanvasContext, type UICanvasContext2DRef, type UICanvasImageDataState } from './UICanvasContext.ts'
 import { ReactNode, useRef, useState } from 'react'
 
 export default function UICanvasProvider ({ children }: { children: ReactNode }) {
-  const [UICanvasImageBytes, setUICanvasImageBytes] = useState(initialImageBytes)
+  const [UICanvasImageData, setUICanvasImageData] = useState<UICanvasImageDataState>(null)
 
   const UICanvas = useRef<HTMLCanvasElement>(null)
-  const UICanvasContext2D = useRef<UICanvasContext2DType>(null)
+  const UICanvasContext2D = useRef<UICanvasContext2DRef>(null)
   const UICanvasContainer = useRef<HTMLDivElement>(null)
 
   const contextValue = {
     UICanvas,
     UICanvasContext2D,
     UICanvasContainer,
-    UICanvasImageBytes,
-    setUICanvasImageBytes
+    UICanvasImageData,
+    setUICanvasImageData
   }
 
   return (

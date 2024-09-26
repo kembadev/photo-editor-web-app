@@ -3,26 +3,23 @@ import { useLayoutEffect, useRef } from 'react'
 import { useOffscreenCanvas } from '../../hooks/Canvas/useOffscreenCanvas.ts'
 
 export default function OffscreenCanvasDev () {
-  const { offscreenCanvas, offscreenCanvasImageBytes } = useOffscreenCanvas()
+  const { offscreenCanvasImageData } = useOffscreenCanvas()
 
   const devCanvas = useRef<HTMLCanvasElement>(null)
 
   useLayoutEffect(() => {
-    if (offscreenCanvasImageBytes.byteLength === 0 ||
-      !offscreenCanvas.current ||
+    if (!offscreenCanvasImageData ||
       !devCanvas.current) return
 
-    const { width, height } = offscreenCanvas.current
+    const { width: offscreenCanvasWidth, height: offscreenCanvasHeight } = offscreenCanvasImageData
 
-    devCanvas.current.width = width
-    devCanvas.current.height = height
+    devCanvas.current.width = offscreenCanvasWidth
+    devCanvas.current.height = offscreenCanvasHeight
 
     const devContext = devCanvas.current.getContext('2d')!
 
-    const imageData = devContext.createImageData(width, height)
-    imageData.data.set(offscreenCanvasImageBytes)
-    devContext.putImageData(imageData, 0, 0)
-  }, [offscreenCanvasImageBytes, offscreenCanvas])
+    devContext.putImageData(offscreenCanvasImageData, 0, 0)
+  }, [offscreenCanvasImageData])
 
   return (
     <canvas

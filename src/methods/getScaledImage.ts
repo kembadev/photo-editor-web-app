@@ -1,46 +1,26 @@
-import { getImageBytes } from './getImageBytes.ts'
-
 import { getCanvas } from '../common/helpers/getCanvas.ts'
 
-interface ImageScaler {
-  imageBytes: Uint8Array;
-  canvasWidth: number;
-  canvasHeight: number;
-  scaling: number
-}
+export function getScaledCanvas (imageData: ImageData, scale: number) {
+  const { width, height } = imageData
 
-export function getScaledCanvas ({ imageBytes, canvasWidth, canvasHeight, scaling }: ImageScaler) {
-  const scalingWidth = canvasWidth * scaling
-  const scalingHeight = canvasHeight * scaling
+  const scaledWidth = Math.floor(width * scale)
+  const scaledHeight = Math.floor(height * scale)
 
-  const { canvas, ctx } = getCanvas({
-    imageBytes,
-    canvasWidth,
-    canvasHeight
-  }, (canvas, ctx) => {
-    canvas.width = scalingWidth
-    canvas.height = scalingHeight
+  const { canvas, ctx } = getCanvas(imageData, (canvas, ctx) => {
+    canvas.width = scaledWidth
+    canvas.height = scaledHeight
 
     ctx.imageSmoothingQuality = 'high'
-    ctx.scale(scaling, scaling)
+    ctx.scale(scale, scale)
   })
 
-  return { canvas, ctx, scalingWidth, scalingHeight }
+  return { canvas, ctx, scaledWidth, scaledHeight }
 }
 
-export function getScalingImageBytes ({ imageBytes, canvasWidth, canvasHeight, scaling }: ImageScaler) {
-  const { ctx, scalingWidth, scalingHeight } = getScaledCanvas({
-    imageBytes,
-    canvasWidth,
-    canvasHeight,
-    scaling
-  })
+export function getScaledImageData (imageData: ImageData, scale: number) {
+  const { ctx, scaledWidth, scaledHeight } = getScaledCanvas(imageData, scale)
 
-  const scalingImageBytes = getImageBytes({
-    ctx,
-    canvasWidth: scalingWidth,
-    canvasHeight: scalingHeight
-  })
+  const scaledImageData = ctx.getImageData(0, 0, scaledWidth, scaledHeight)
 
-  return { scalingImageBytes, scalingWidth, scalingHeight }
+  return { scaledImageData, scaledWidth, scaledHeight }
 }

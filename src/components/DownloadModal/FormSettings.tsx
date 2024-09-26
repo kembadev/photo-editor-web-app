@@ -17,7 +17,7 @@ interface FormSettingsProps {
 export function FormSettings ({ closeDownloadModal, isModalOpened }: FormSettingsProps) {
   const [desiredScale, setDesiredScale] = useState(1)
 
-  const { offscreenCanvas, offscreenCanvasImageBytes } = useOffscreenCanvas()
+  const { offscreenCanvasImageData } = useOffscreenCanvas()
 
   const { filename, handleFilenameOnChange, filenameError, formatDefaultValue } = useFilename()
   const { handleOnSubmit, isDownloading, downloadError } = useDownloadImage()
@@ -31,16 +31,17 @@ export function FormSettings ({ closeDownloadModal, isModalOpened }: FormSetting
   }
 
   const imageFinalDimensions = useMemo(() => {
-    if (!offscreenCanvas.current ||
-      offscreenCanvasImageBytes.length === 0) return { width: 0, height: 0 }
+    if (!offscreenCanvasImageData) {
+      return { width: 0, height: 0 }
+    }
 
-    const { width: offscreenCanvasWidth, height: offscreenCanvasHeight } = offscreenCanvas.current
+    const { width, height } = offscreenCanvasImageData
 
-    const width = Math.round(desiredScale * offscreenCanvasWidth)
-    const height = Math.round(desiredScale * offscreenCanvasHeight)
+    const scaledWidth = Math.floor(desiredScale * width)
+    const scaledHeight = Math.floor(desiredScale * height)
 
-    return { width, height }
-  }, [desiredScale, offscreenCanvas, offscreenCanvasImageBytes])
+    return { width: scaledWidth, height: scaledHeight }
+  }, [desiredScale, offscreenCanvasImageData])
 
   return (
     <div style={{ position: 'relative' }}>

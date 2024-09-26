@@ -10,20 +10,20 @@ interface ImagePreviewProps {
 export function ImagePreview ({ isModalOpened }: ImagePreviewProps) {
   const [imgPreviewSrc, setImgPreviewSrc] = useState('')
 
-  const { offscreenCanvas, offscreenCanvasImageBytes } = useOffscreenCanvas()
+  const { offscreenCanvas, offscreenCanvasImageData } = useOffscreenCanvas()
 
   useEffect(() => {
-    if (offscreenCanvasImageBytes.byteLength === 0 ||
+    if (!offscreenCanvasImageData ||
       !offscreenCanvas.current ||
       !isModalOpened) return
 
-    offscreenCanvas.current.convertToBlob({ quality: 1 })
+    offscreenCanvas.current.convertToBlob({ type: 'image/webp', quality: 0.8 })
       .then(blob => {
         const blobURL = URL.createObjectURL(blob)
         setImgPreviewSrc(blobURL)
       })
       .catch(err => console.error(err))
-  }, [offscreenCanvas, offscreenCanvasImageBytes, isModalOpened])
+  }, [offscreenCanvas, offscreenCanvasImageData, isModalOpened])
 
   return (
     <section className='download-modal__image-preview'>

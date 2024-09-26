@@ -1,17 +1,15 @@
-import { getUpdatedImageBytes, type ReducerAction, type CanvasDimensions } from '../reducer-like/ImageBytes.ts'
+import { getUpdatedImageData, type ReducerAction } from '../reducer-like/ImageData.ts'
 
 export interface Message {
-  latestImageBytes: Uint8Array;
-  action: ReducerAction;
-  canvasDimensions: CanvasDimensions
+  latestImageData: ImageData;
+  action: ReducerAction
 }
 
 onmessage = (e: MessageEvent<Message>) => {
-  const { latestImageBytes, action, canvasDimensions } = e.data
+  const { latestImageData, action } = e.data
 
-  getUpdatedImageBytes({ state: latestImageBytes, action, canvasDimensions })
-    .then(newOffscreenCanvasImageBytes => {
-      const buffer = (newOffscreenCanvasImageBytes as Uint8Array).buffer
-      postMessage(buffer, [buffer])
+  getUpdatedImageData(latestImageData, action)
+    .then(newImageData => {
+      postMessage(newImageData)
     })
 }

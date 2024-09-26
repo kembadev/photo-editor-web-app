@@ -6,10 +6,14 @@ import { useControls } from '../ControlPanel/useControls.ts'
 import { useDiscardImage } from '../../common/hooks/useDiscardImage.ts'
 
 import { getImageResize } from '../../methods/getImageResize.ts'
-import { getImageBytes } from '../../methods/getImageBytes.ts'
+import { getImageDataFromContext, type GetImageDataReturnValue } from '../../methods/getImageData.ts'
 import { dispatchWarning } from '../../methods/dispatchWarning.ts'
 
-import { ImageMemoryError } from '../../error-handling/ImageError.ts'
+import { ImageError } from '../../error-handling/ImageError.ts'
+
+function isSampleImageData (sample: GetImageDataReturnValue): sample is ImageData {
+  return sample instanceof ImageData
+}
 
 export function useLoadEditor () {
   const { providedImgFile } = useImageFile()
@@ -57,40 +61,42 @@ export function useLoadEditor () {
     UICanvasContext2D.current = UIContext
     UIContext.drawImage(imgElement, 0, 0, UICanvasWidth, UICanvasHeight)
 
-    const initialOffscreenCanvasImageBytes = getImageBytes({
+    const initialOffscreenCanvasImageData = getImageDataFromContext({
       ctx: offscreenContext,
-      canvasWidth: imgWidth,
-      canvasHeight: imgHeight
+      width: imgWidth,
+      height: imgHeight
     })
 
-    const initialUICanvasImageBytes = getImageBytes({
+    const initialUICanvasImageData = getImageDataFromContext({
       ctx: UIContext,
-      canvasWidth: UICanvasWidth,
-      canvasHeight: UICanvasHeight
+      width: UICanvasWidth,
+      height: UICanvasHeight
     })
 
-    const isInitialImageBytesInvalid = !(initialOffscreenCanvasImageBytes instanceof Uint8Array) ||
-      !(initialUICanvasImageBytes instanceof Uint8Array)
+    const areBothSamplesValid = isSampleImageData(initialOffscreenCanvasImageData) &&
+      isSampleImageData(initialUICanvasImageData)
 
-    if (isInitialImageBytesInvalid) {
-      discardImage()
+    if (areBothSamplesValid) {
+      setInitialCharge({
+        initialOffscreenCanvasImageData,
+        initialUICanvasImageData
+      })
 
-      const doesMemmoryExceed = initialOffscreenCanvasImageBytes instanceof ImageMemoryError ||
-        initialUICanvasImageBytes instanceof ImageMemoryError
-
-      if (doesMemmoryExceed) {
-        dispatchWarning('Image is too large to work with.')
-        return
-      }
-
-      dispatchWarning('Something went wrong. Try again later.')
       return
     }
 
-    setInitialCharge({
-      initialOffscreenCanvasImageBytes,
-      initialUICanvasImageBytes
-    })
+    discardImage()
+
+    const samples = [initialOffscreenCanvasImageData, initialUICanvasImageData]
+
+    const imageError = samples.find(sample => sample instanceof ImageError)
+
+    if (imageError) {
+      dispatchWarning(imageError.message)
+      return
+    }
+
+    dispatchWarning('Something went wrong. Try again later.')
   }, [UICanvas, UICanvasContext2D, UICanvasContainer, offscreenCanvas, offscreenCanvasContext2D, discardImage, setInitialCharge])
 
   const onEditorLoad = useCallback((fn?: () => void) => {

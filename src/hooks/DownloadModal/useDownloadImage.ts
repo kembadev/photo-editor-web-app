@@ -4,7 +4,6 @@ import { FormEvent, useCallback, useState } from 'react'
 import { useErrorMessage } from '../../common/hooks/useErrorMessage.ts'
 import { useOffscreenCanvas } from '../Canvas/useOffscreenCanvas.ts'
 
-import { getImageBytes } from '../../methods/getImageBytes.ts'
 import { getInternetConnectionStatus } from '../../common/helpers/NetworkStatus.ts'
 
 import DownloadWorker from '../../dedicated-workers/download.ts?worker'
@@ -22,14 +21,12 @@ export function useDownloadImage () {
     updateErrorMessage: updateDownloadError
   } = useErrorMessage()
 
-  const { offscreenCanvas, offscreenCanvasContext2D } = useOffscreenCanvas()
+  const { offscreenCanvasImageData } = useOffscreenCanvas()
 
   const handleOnSubmit = useCallback((e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    if (isDownloading ||
-      !offscreenCanvas.current ||
-      !offscreenCanvasContext2D.current) return
+    if (isDownloading || !offscreenCanvasImageData) return
 
     const form = e.target as HTMLFormElement
 
@@ -45,39 +42,33 @@ export function useDownloadImage () {
     }
 
     if (!scale || !name || !format) {
-      if (name === '') return console.error('Filename required.')
+      if (name === '') {
+        console.error('Filename required.')
+        return
+      }
 
       dispatchDownloadError('Unexpected error.')
       return
     }
 
-    if (isNaN(scale)) return console.error('Error on scale input.')
+    if (isNaN(scale)) {
+      console.error('Error on scale input.')
+      return
+    }
 
     setIsDownloading(true)
 
     console.info('Downloading image...')
 
-    const { width: offscreenCanvasWidth, height: offscreenCanvasHeight } = offscreenCanvas.current
-
-    const imageBytes = getImageBytes({
-      ctx: offscreenCanvasContext2D.current,
-      canvasWidth: offscreenCanvasWidth,
-      canvasHeight: offscreenCanvasHeight
-    }) as Uint8Array
-
-    const buffer = imageBytes.buffer
-
     const message: Message = {
-      buffer,
-      canvasWidth: offscreenCanvasWidth,
-      canvasHeight: offscreenCanvasHeight,
+      imageData: offscreenCanvasImageData,
       MIMEType: `image/${format}`,
       scaling: scale
     }
 
     const worker = new DownloadWorker({ name: 'DOWNLOAD_WORKER' })
 
-    worker.postMessage(message, [buffer])
+    worker.postMessage(message)
 
     worker.onmessage = (e: MessageEvent<Blob | string>) => {
       if (!(e.data instanceof Blob)) {
@@ -118,7 +109,7 @@ export function useDownloadImage () {
         })
         .finally(() => setIsDownloading(false))
     }
-  }, [isDownloading, offscreenCanvas, offscreenCanvasContext2D, updateDownloadError])
+  }, [isDownloading, updateDownloadError, offscreenCanvasImageData])
 
   return { handleOnSubmit, isDownloading, downloadError }
 }

@@ -1,20 +1,18 @@
-import { OffscreenCanvasContext, type OffscreenCanvasType, type OffscreenCanvasContext2DType } from './OffscreenCanvasContext.ts'
+import { OffscreenCanvasContext, type OffscreenCanvasRef, type OffscreenCanvasContext2DRef, type OffscreenCanvasImageDataState } from './OffscreenCanvasContext.ts'
 
 import { ReactNode, useRef, useState } from 'react'
 
-import { initialImageBytes } from '../../reducer-like/ImageBytes.ts'
-
 export default function OffscreenCanvasProvider ({ children }: { children: ReactNode }) {
-  const [offscreenCanvasImageBytes, setOffscreenCanvasImageBytes] = useState(initialImageBytes)
+  const [offscreenCanvasImageData, setOffscreenCanvasImageData] = useState<OffscreenCanvasImageDataState>(null)
 
-  const offscreenCanvas = useRef<OffscreenCanvasType>(null)
-  const offscreenCanvasContext2D = useRef<OffscreenCanvasContext2DType>(null)
+  const offscreenCanvas = useRef<OffscreenCanvasRef>(null)
+  const offscreenCanvasContext2D = useRef<OffscreenCanvasContext2DRef>(null)
 
   const contextValue = {
     offscreenCanvas,
     offscreenCanvasContext2D,
-    offscreenCanvasImageBytes,
-    setOffscreenCanvasImageBytes
+    offscreenCanvasImageData,
+    setOffscreenCanvasImageData
   }
 
   return (
