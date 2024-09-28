@@ -4,6 +4,7 @@
   justify-items: center;
   align-items: center;
   flex: 1;
+  padding: 0 20px;
 
   .UICanvas {
     position: relative;

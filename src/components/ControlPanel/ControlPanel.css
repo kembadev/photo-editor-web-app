@@ -64,7 +64,7 @@ button {
 }
 
 .control-panel__image-actions .tool-features {
-  height: 60px;
+  height: 75px;
   display: flex;
   justify-content: center;
   gap: 6px;

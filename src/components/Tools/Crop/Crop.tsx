@@ -11,7 +11,7 @@ export type AspectRatio = { aspectRatio: number | 'original'; name: string }
 
 const aspectRatios: AspectRatio[] = [
   { aspectRatio: 'original', name: 'Original' },
-  { aspectRatio: 26 / 36, name: 'Carnet (26/36)' },
+  { aspectRatio: 26 / 36, name: '26/36' },
   { aspectRatio: 1, name: 'Square' },
   { aspectRatio: 5 / 4, name: '5/4' },
   { aspectRatio: 4 / 3, name: '4/3' },

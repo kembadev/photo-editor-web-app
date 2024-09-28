@@ -44,7 +44,7 @@ export function FormSettings ({ closeDownloadModal, isModalOpened }: FormSetting
   }, [desiredScale, offscreenCanvasImageData])
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div>
       {isDownloading && <Loading color='#8dcbf2' />}
       <form
         className='download-modal__form'

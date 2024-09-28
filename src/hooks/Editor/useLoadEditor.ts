@@ -4,19 +4,21 @@ import { useUICanvas } from '../Canvas/useUICanvas.ts'
 import { useOffscreenCanvas } from '../Canvas/useOffscreenCanvas.ts'
 import { useControls } from '../ControlPanel/useControls.ts'
 import { useDiscardImage } from '../../common/hooks/useDiscardImage.ts'
+import { useFilters } from './useFilters.ts'
 
 import { getImageResize } from '../../methods/getImageResize.ts'
-import { getImageDataFromContext, type GetImageDataReturnValue } from '../../methods/getImageData.ts'
+import { getImageDataFromContext } from '../../methods/getImageData.ts'
 import { dispatchWarning } from '../../methods/dispatchWarning.ts'
 
 import { ImageError } from '../../error-handling/ImageError.ts'
 
-function isSampleImageData (sample: GetImageDataReturnValue): sample is ImageData {
+function isSampleImageData (sample: ImageData | ImageError | undefined): sample is ImageData {
   return sample instanceof ImageData
 }
 
 export function useLoadEditor () {
   const { providedImgFile } = useImageFile()
+  const { updateFiltersPreview } = useFilters()
 
   const {
     UICanvas,
@@ -82,6 +84,7 @@ export function useLoadEditor () {
         initialUICanvasImageData
       })
 
+      updateFiltersPreview(initialOffscreenCanvasImageData)
       return
     }
 
@@ -97,7 +100,7 @@ export function useLoadEditor () {
     }
 
     dispatchWarning('Something went wrong. Try again later.')
-  }, [UICanvas, UICanvasContext2D, UICanvasContainer, offscreenCanvas, offscreenCanvasContext2D, discardImage, setInitialCharge])
+  }, [UICanvas, UICanvasContext2D, UICanvasContainer, offscreenCanvas, offscreenCanvasContext2D, discardImage, setInitialCharge, updateFiltersPreview])
 
   const onEditorLoad = useCallback((fn?: () => void) => {
     if (!providedImgFile) return

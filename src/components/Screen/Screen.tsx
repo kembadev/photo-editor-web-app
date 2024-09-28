@@ -9,6 +9,7 @@ import OffscreenCanvasProvider from '../../context/Canvas/OffscreenCanvasProvide
 import UICanvasProvider from '../../context/Canvas/UICanvasProvider.tsx'
 import LogsProvider from '../../context/Editor/LogsProvider.tsx'
 import ControlsProvider from '../../context/ControlPanel/ControlsProvider.tsx'
+import FiltersProvider from '../../context/Filters/FiltersProvider.tsx'
 
 import { UploadImage } from '../Upload/UploadImage.tsx'
 import DefaultView from '../../common/components/DefaultView.tsx'
@@ -50,9 +51,11 @@ export function Screen () {
                 <LogsProvider>
                   <OffscreenCanvasProvider>
                     <UICanvasProvider>
-                      <ControlsProvider>
-                        <LazyEditor />
-                      </ControlsProvider>
+                      <FiltersProvider>
+                        <ControlsProvider>
+                          <LazyEditor />
+                        </ControlsProvider>
+                      </FiltersProvider>
                     </UICanvasProvider>
                   </OffscreenCanvasProvider>
                 </LogsProvider>

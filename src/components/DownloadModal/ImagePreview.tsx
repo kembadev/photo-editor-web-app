@@ -17,12 +17,15 @@ export function ImagePreview ({ isModalOpened }: ImagePreviewProps) {
       !offscreenCanvas.current ||
       !isModalOpened) return
 
-    offscreenCanvas.current.convertToBlob({ type: 'image/webp', quality: 0.8 })
+    offscreenCanvas.current.convertToBlob({ type: 'image/webp', quality: 0.65 })
       .then(blob => {
         const blobURL = URL.createObjectURL(blob)
         setImgPreviewSrc(blobURL)
       })
-      .catch(err => console.error(err))
+      .catch(err => {
+        console.error(err)
+        setImgPreviewSrc('')
+      })
   }, [offscreenCanvas, offscreenCanvasImageData, isModalOpened])
 
   return (

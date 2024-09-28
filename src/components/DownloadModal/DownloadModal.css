@@ -8,7 +8,6 @@
 
 .download-modal {
   box-sizing: border-box;
-  min-height: 225px;
   min-width: 280px;
   width: fit-content;
   background-color: var(--dark);

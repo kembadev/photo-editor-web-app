@@ -1,4 +1,5 @@
 import { getScaledCanvas } from '../methods/getScaledImage.ts'
+import { getImageDataFromContext } from '../methods/getImageData.ts'
 
 export interface Message {
   imageData: ImageData;
@@ -9,13 +10,36 @@ export interface Message {
 onmessage = async (e: MessageEvent<Message>) => {
   const { imageData, scaling, MIMEType } = e.data
 
-  const { canvas } = getScaledCanvas(imageData, scaling)
+  const { canvas, ctx } = getScaledCanvas(imageData, scaling)
+
+  const scaledImageData = getImageDataFromContext({
+    ctx,
+    width: canvas.width,
+    height: canvas.height
+  })
+
+  if (!(scaledImageData instanceof ImageData)) {
+    if (scaledImageData === undefined) {
+      return postMessage('Something went wrong while downloading. Try again.')
+    }
+
+    if (scaledImageData.name === 'ImageMemoryError') {
+      return postMessage('The image exceed the memory limit. Reduce the scale.')
+    }
+
+    if (scaledImageData.name === 'ImageSecurityError') {
+      return postMessage('The image cannot be download due to security reasons.')
+    }
+
+    postMessage('Unexpected error.')
+    return
+  }
 
   canvas.convertToBlob({ type: MIMEType, quality: 1 })
     .then(blob => postMessage(blob))
     .catch(e => {
       if (!(e instanceof Error)) {
-        return postMessage('Something went wrong while downloading.')
+        return postMessage('Something went wrong while downloading. Try again.')
       }
 
       if (e.name === 'IndexSizeError') {

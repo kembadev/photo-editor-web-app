@@ -9,6 +9,7 @@ import { useUICanvas } from '../Canvas/useUICanvas.ts'
 
 import { getImageResize } from '../../methods/getImageResize.ts'
 import { getScaledImageData } from '../../methods/getScaledImage.ts'
+import { dispatchWarning } from '../../methods/dispatchWarning.ts'
 
 export function useAction () {
   const { setInitialCharge, clearCanvas, actionMiddleware } = useActionMiddleware()
@@ -79,7 +80,16 @@ export function useAction () {
       })
 
       const scale = (scaleX + scaleY) / 2
-      const { scaledImageData } = getScaledImageData(clippedImageData, scale)
+      const scaledImageData = getScaledImageData(clippedImageData, scale)
+
+      if (!(scaledImageData instanceof ImageData)) {
+        dispatchWarning({
+          message: 'The image could not be enlarged.',
+          color: 'yellow'
+        })
+
+        return
+      }
 
       return scaledImageData
     })

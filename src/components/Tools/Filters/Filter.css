@@ -1,6 +1,6 @@
 .image-filters {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   padding: 0;
   margin: 0;
   list-style-type: none;
@@ -11,8 +11,33 @@
 
 .image-filters__item {
   scroll-snap-align: start;
+  cursor: pointer;
 
-  button {
+  figure {
     height: 100%;
+    width: 60px;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+  }
+
+  div {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    img {
+      width: 80%;
+      height: 40px;
+      object-fit: cover;
+      font-size: 0.5rem;
+    }
+  }
+
+  figcaption {
+    font-size: 0.6rem;
+    text-align: center;
   }
 }

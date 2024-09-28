@@ -6,6 +6,8 @@ import { getClippedImageData } from '../methods/getClippedImageData.ts'
 import { lazyLoading, suspenseLoading } from '../common/helpers/LazyLoading.ts'
 import { getDecompressedImageBytes } from '../lib/compress.ts'
 
+import { createSpecialDocumentForWorker } from '../common/helpers/documentOnWorkerContext.ts'
+
 export enum IMAGE_DATA_ACTION_TYPES {
   // RESET = 'RESET',
   RESTORE = 'RESTORE',
@@ -69,26 +71,7 @@ const lazyApplyFilter = lazyLoading(async () => {
   return applyFilter
 })
 
-interface WorkerDocument extends Document {
-  createElement(tagName: 'canvas'): OffscreenCanvas;
-  createElement(tagName: string): never
-}
-
-const workerDocument = {
-  createElement: (tagName: string) => {
-    if (tagName === 'canvas') {
-      return new OffscreenCanvas(0, 0)
-    }
-
-    throw new Error(`Unsupported element: ${tagName}`)
-  }
-} as WorkerDocument
-
 const updateImageData = async (state: ImageData, action: ReducerAction): Promise<ImageData> => {
-  if (typeof window === 'undefined') {
-    self.document = workerDocument
-  }
-
   const { type } = action
 
   if (type === IMAGE_DATA_ACTION_TYPES.RESTORE) {
@@ -135,6 +118,8 @@ const updateImageData = async (state: ImageData, action: ReducerAction): Promise
   }
 
   if (type === IMAGE_DATA_ACTION_TYPES.FILTER) {
+    createSpecialDocumentForWorker()
+
     const applyFilter = await suspenseLoading(lazyApplyFilter)
     const { filter } = action.payload
 

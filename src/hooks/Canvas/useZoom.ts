@@ -8,6 +8,7 @@ import { useUICanvas } from './useUICanvas.ts'
 import { getScaledImageData } from '../../methods/getScaledImage.ts'
 import { getClippedImageData } from '../../methods/getClippedImageData.ts'
 import { getModifiedImageBytes } from '../../helpers/Controls/getModifiedImageBytes.ts'
+import { dispatchWarning } from '../../methods/dispatchWarning.ts'
 
 import { ImageError } from '../../error-handling/ImageError.ts'
 
@@ -295,7 +296,24 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
       return
     }
 
-    const { scaledImageData } = getScaledImageData(UICanvasImageData, zoom.level)
+    const scaledImageData = getScaledImageData(UICanvasImageData, zoom.level)
+
+    if (!(scaledImageData instanceof ImageData)) {
+      if (scaledImageData === undefined) {
+        dispatchWarning({
+          message: 'Unexpected error when zooming the image.',
+          color: 'yellow'
+        })
+        return
+      }
+
+      dispatchWarning({
+        message: 'The image is too large to zoom in further.',
+        color: 'yellow'
+      })
+
+      return
+    }
 
     const restOfProps = getRestOfPropsOnClippedImageData({
       zoom,

@@ -28,3 +28,10 @@ export class ImageMemoryError extends ImageError {
     this.name = 'ImageMemoryError'
   }
 }
+
+export class ImageSecurityError extends ImageError {
+  constructor (message: string) {
+    super(message)
+    this.name = 'ImageSecurityError'
+  }
+}

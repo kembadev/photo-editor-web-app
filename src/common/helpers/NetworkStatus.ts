@@ -19,13 +19,7 @@ async function checkInternetStatus () {
 
 let isConnectionCheckingIntervalRunning = false
 
-export async function getInternetConnectionStatus () {
-  const ok = await checkInternetStatus()
-
-  if (ok) return true
-
-  if (isConnectionCheckingIntervalRunning) return false
-
+export function runConnectionChecksAtIntervals () {
   isConnectionCheckingIntervalRunning = true
 
   const interval = setInterval(async () => {
@@ -39,6 +33,16 @@ export async function getInternetConnectionStatus () {
     const warningEvent = new CustomEvent(EVENTS.INTERNET_RECOVERY)
     window.dispatchEvent(warningEvent)
   }, 3000)
+}
+
+export async function getInternetConnectionStatus () {
+  const ok = await checkInternetStatus()
+
+  if (ok) return true
+
+  if (typeof window === 'undefined' || isConnectionCheckingIntervalRunning) return false
+
+  runConnectionChecksAtIntervals()
 
   return false
 }

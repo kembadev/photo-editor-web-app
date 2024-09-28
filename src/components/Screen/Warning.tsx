@@ -2,7 +2,7 @@ import './Warning.css'
 
 import { useMemo } from 'react'
 
-export type WarningColor = 'red' | 'green'
+export type WarningColor = 'red' | 'green' | 'yellow'
 
 interface WarningProps {
   message: string;
@@ -12,6 +12,8 @@ interface WarningProps {
 export function Warning ({ message, color = 'red' }: WarningProps) {
   const backgroundColor: string = useMemo(() => {
     if (color === 'red') return '#b53471'
+
+    if (color === 'yellow') return '#f6b93b'
 
     return '#01a3a4'
   }, [color])
