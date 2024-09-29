@@ -46,6 +46,7 @@ export function Filters () {
             <figure>
               <div>
                 <img
+                  loading='lazy'
                   src={filtersPreview ? getImgSrc(filter) : ''}
                   alt={`${name.toLowerCase().split(' ').join('_')}_image`}
                 />

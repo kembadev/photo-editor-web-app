@@ -7,6 +7,8 @@ import { EVENTS, USABLE_CANVAS } from '../consts.ts'
 import { IS_DEVELOPMENT } from '../config.ts'
 
 import { TaskQueue } from '../utils/TaskQueue.ts'
+import { dispatchWarning } from '../methods/dispatchWarning.ts'
+import { runConnectionChecksAtIntervals } from '../common/helpers/NetworkStatus.ts'
 
 import OffscreenCanvasWorker from '../dedicated-workers/offscreenCanvas.ts?worker'
 
@@ -64,6 +66,11 @@ function replaceTypedArrayRecursively (value: unknown): unknown {
   return newObj
 }
 
+export enum OFFSCREEN_CANVAS_ERROR_MESSAGES {
+  INTERNET_DOWN = 'INTERNET_DOWN',
+  UNEXPECTED_ERROR = 'UNEXPECTED_ERROR'
+}
+
 function getTaskProcessor (startingLogs: StartingLogs, latestImageDataHandler: LatestImageDataHandler) {
   const worker = new OffscreenCanvasWorker({
     name: 'OFFSCREEN_CANVAS_WORKER'
@@ -110,7 +117,31 @@ function getTaskProcessor (startingLogs: StartingLogs, latestImageDataHandler: L
     worker.postMessage(message)
 
     worker.onmessage = async (e: MessageEvent<ImageData>) => {
-      const newImageData = e.data
+      const { data } = e
+
+      if (!(data instanceof ImageData)) {
+        if (data === OFFSCREEN_CANVAS_ERROR_MESSAGES.INTERNET_DOWN) {
+          dispatchWarning({
+            message: 'Internet connection lost. You can continue editing your image. Waiting for reconnection to process your edits.',
+            color: 'yellow'
+          })
+
+          runConnectionChecksAtIntervals()
+
+          const abortController = new AbortController()
+
+          window.addEventListener(EVENTS.INTERNET_RECOVERY, () => {
+            worker.postMessage(message)
+            abortController.abort()
+          }, { signal: abortController.signal })
+
+          return
+        }
+
+        return
+      }
+
+      const newImageData = data
 
       const interceptedImageData = modifierFn
         ? await modifierFn(
