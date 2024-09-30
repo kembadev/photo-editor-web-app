@@ -4,6 +4,7 @@ import { ZOOM_LIMITS } from '../../consts.ts'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useUICanvas } from './useUICanvas.ts'
+import { usePosition } from '../../common/hooks/usePosition.ts'
 
 import { getScaledImageData } from '../../methods/getScaledImage.ts'
 import { getClippedImageData } from '../../methods/getClippedImageData.ts'
@@ -61,11 +62,22 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
     UICanvasImageData
   } = useUICanvas()
 
+  const { getPointerPositionOnUICanvas } = usePosition()
+
   const [zoom, setZoom] = useState<Zoom>({ level: 1, pointerPosition: 'center' })
 
   const prevZoom = useRef(zoom)
   const prevFromCorner = useRef({ sx: 0, sy: 0 })
   const prevTouchesPosition = useRef<PrevTouchesPosition>(['center', 'center'])
+
+  // fundamental zoom changes
+
+  const restoreZoom = useCallback(() => {
+    setZoom({
+      level: 1,
+      pointerPosition: 'center'
+    })
+  }, [])
 
   const zoomIn = useCallback(({ pointerPosition = 'center', n = 0.2 }: ChangeZoom = changeZoomDefaultProps) => {
     if (currentToolSelected === 'Crop' || zoom.level === ZOOM_LIMITS.MAX) return
@@ -99,32 +111,23 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
     })
   }, [zoom, currentToolSelected])
 
-  const restoreZoom = useCallback(() => {
-    setZoom({
-      level: 1,
-      pointerPosition: 'center'
-    })
-  }, [])
+  // set zoom by UIEvents
 
   const onWheelChange = useCallback((e: WheelEvent) => {
     e.preventDefault()
 
-    if (!UICanvas.current) return
+    const pointerPosition = getPointerPositionOnUICanvas(e)
 
-    const { deltaY, clientX, clientY } = e
-    const { left, top } = UICanvas.current.getBoundingClientRect()
+    if (!pointerPosition) return
 
-    const x = clientX - left
-    const y = clientY - top
-
-    const pointerPosition = { x, y }
+    const { deltaY } = e
 
     const n = deltaY * 0.001
 
     if (deltaY < 0) return zoomIn({ pointerPosition, n: -n })
 
     zoomOut({ pointerPosition, n })
-  }, [zoomIn, zoomOut, UICanvas])
+  }, [zoomIn, zoomOut, getPointerPositionOnUICanvas])
 
   const getTouchesPosition = useCallback(({ e, left, top }: GetTouchesPositionProps) => {
     const { touches } = e
@@ -257,6 +260,8 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
     }
   }, [])
 
+  // set zoom listening to UIEvents
+
   useEffect(() => {
     if (!UICanvas.current) return
 
@@ -274,6 +279,8 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
       canvas.removeEventListener('touchmove', onTouchChange)
     }
   }, [UICanvas, onWheelChange, onTouchStart, onTouchChange])
+
+  // replace UICanvas image depending on zoom
 
   useEffect(() => {
     if (!UICanvasContext2D.current || !UICanvasImageData) return
