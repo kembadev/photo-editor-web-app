@@ -89,7 +89,7 @@
 
 .config-controls__image-name {
   label {
-    display: block;
+    display: inline-block;
     font-size: 0.9em;
     margin-bottom: 6px;
     font-weight: var(--fontWeight);

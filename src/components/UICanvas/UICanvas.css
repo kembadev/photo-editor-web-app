@@ -1,4 +1,4 @@
-.UICanvas_container {
+.UICanvas-container {
   display: grid;
   place-content: center;
   justify-items: center;
@@ -26,7 +26,7 @@
   }
 }
 
-.UICanvas_container .zoom-controls_container {
+.UICanvas-container .zoom-controls-container {
   line-height: 1.2em;
   display: flex;
   flex-direction: row;

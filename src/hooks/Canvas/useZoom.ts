@@ -2,24 +2,22 @@ import { type AvailableToolsNames } from '../../components/Tools/tools.tsx'
 
 import { ZOOM_LIMITS } from '../../consts.ts'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { TouchEvent, useCallback, useEffect, useRef, useState, WheelEvent } from 'react'
 import { useUICanvas } from './useUICanvas.ts'
 import { usePosition } from '../../common/hooks/usePosition.ts'
 
 import { getScaledImageData } from '../../methods/getScaledImage.ts'
 import { getClippedImageData } from '../../methods/getClippedImageData.ts'
-import { getModifiedImageBytes } from '../../helpers/Controls/getModifiedImageBytes.ts'
 import { dispatchWarning } from '../../methods/dispatchWarning.ts'
-
 import { ImageError } from '../../error-handling/ImageError.ts'
 
 interface UseZoomProps {
   currentToolSelected: AvailableToolsNames
 }
 
-export type Position = { x: number; y: number }
+type Position = { x: number; y: number }
 
-type PointerPosition = Position | 'center'
+type PointerPosition = Position | undefined
 
 interface Zoom {
   level: number;
@@ -28,94 +26,89 @@ interface Zoom {
 
 interface ChangeZoom {
   pointerPosition: PointerPosition;
-  n?: number
+  n: number
 }
 
+const changeZoomDefaultProps: ChangeZoom = { pointerPosition: undefined, n: 0.2 }
+
 type PrevTouchesPosition = [
-  prevTouch1: 'center',
-  prevTouch2: 'center'
+  prevTouch1: undefined,
+  prevTouch2: undefined
 ] | [
   prevTouch1: Position,
   prevTouch2: Position
 ]
 
-interface GetTouchesPositionProps {
-  e: TouchEvent;
-  left: number;
-  top: number
+interface GetSourcePositionOnClippedImageDataProps {
+  widthOfImageToCut: number;
+  heightOfImageToCut: number
 }
-
-interface RestOfPropsOnClippedImageBytes {
-  zoom: Zoom;
-  prevZoom: Zoom;
-  prevFromCorner: { sx: number, sy: number };
-  UICanvasWidth: number;
-  UICanvasHeight: number;
-}
-
-const changeZoomDefaultProps: ChangeZoom = { pointerPosition: 'center', n: 0.2 }
 
 export function useZoom ({ currentToolSelected }: UseZoomProps) {
-  const {
-    UICanvas,
-    UICanvasContext2D,
-    UICanvasImageData
-  } = useUICanvas()
+  const [zoom, setZoom] = useState<Zoom>({ level: 1, pointerPosition: undefined })
 
-  const { getPointerPositionOnUICanvas } = usePosition()
+  const { UICanvas, UICanvasImageData } = useUICanvas()
+  const [transformedImageData, setTransformedImageData] = useState(UICanvasImageData)
 
-  const [zoom, setZoom] = useState<Zoom>({ level: 1, pointerPosition: 'center' })
+  const { getPointerPositionOnUICanvas, getTouchesPositionOnUICanvas } = usePosition()
 
   const prevZoom = useRef(zoom)
   const prevFromCorner = useRef({ sx: 0, sy: 0 })
-  const prevTouchesPosition = useRef<PrevTouchesPosition>(['center', 'center'])
+  const prevTouchesPosition = useRef<PrevTouchesPosition>([undefined, undefined])
 
   // fundamental zoom changes
 
   const restoreZoom = useCallback(() => {
     setZoom({
       level: 1,
-      pointerPosition: 'center'
+      pointerPosition: undefined
     })
   }, [])
 
-  const zoomIn = useCallback(({ pointerPosition = 'center', n = 0.2 }: ChangeZoom = changeZoomDefaultProps) => {
-    if (currentToolSelected === 'Crop' || zoom.level === ZOOM_LIMITS.MAX) return
+  const doZoom = useCallback(({ pointerPosition, n }: ChangeZoom) => {
+    if (!UICanvas.current || currentToolSelected === 'Crop') return
 
-    setZoom(prevZoom => {
-      const { level } = prevZoom
+    const { pointerPosition: accumulatedPointerPosition } = zoom
 
-      const desiredZoom = Number((level + n).toFixed(2))
+    const desiredZoom = Number((zoom.level + n).toFixed(2))
 
-      const newZoomLevel = desiredZoom > ZOOM_LIMITS.MAX
-        ? ZOOM_LIMITS.MAX
-        : desiredZoom
-
-      return { level: newZoomLevel, pointerPosition }
-    })
-  }, [zoom, currentToolSelected])
-
-  const zoomOut = useCallback(({ pointerPosition = 'center', n = 0.2 }: ChangeZoom = changeZoomDefaultProps) => {
-    if (currentToolSelected === 'Crop' || zoom.level === ZOOM_LIMITS.MIN) return
-
-    setZoom(prevZoom => {
-      const { level } = prevZoom
-
-      const desiredZoom = Number((level - n).toFixed(2))
-
-      const newZoomLevel = desiredZoom < ZOOM_LIMITS.MIN
+    const newZoomLevel = desiredZoom > ZOOM_LIMITS.MAX
+      ? ZOOM_LIMITS.MAX
+      : desiredZoom < ZOOM_LIMITS.MIN
         ? ZOOM_LIMITS.MIN
         : desiredZoom
 
-      return { level: newZoomLevel, pointerPosition }
+    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
+
+    const updatedPointerPosition = pointerPosition ||
+      accumulatedPointerPosition ||
+      { x: Math.round(UICanvasWidth / 2), y: Math.round(UICanvasHeight / 2) }
+
+    const { x, y } = updatedPointerPosition
+
+    if (x < 0 || y < 0 || x > UICanvasWidth || y > UICanvasHeight) return
+
+    setZoom({
+      level: newZoomLevel,
+      pointerPosition: updatedPointerPosition
     })
-  }, [zoom, currentToolSelected])
+  }, [zoom, UICanvas, currentToolSelected])
+
+  const zoomIn = useCallback(({ pointerPosition, n } = changeZoomDefaultProps) => {
+    if (zoom.level === ZOOM_LIMITS.MAX) return
+
+    doZoom({ pointerPosition, n })
+  }, [zoom, doZoom])
+
+  const zoomOut = useCallback(({ pointerPosition, n } = changeZoomDefaultProps) => {
+    if (zoom.level === ZOOM_LIMITS.MIN) return
+
+    doZoom({ pointerPosition, n: -n })
+  }, [zoom, doZoom])
 
   // set zoom by UIEvents
 
-  const onWheelChange = useCallback((e: WheelEvent) => {
-    e.preventDefault()
-
+  const onWheelChange = useCallback((e: WheelEvent<HTMLCanvasElement>) => {
     const pointerPosition = getPointerPositionOnUICanvas(e)
 
     if (!pointerPosition) return
@@ -129,45 +122,25 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
     zoomOut({ pointerPosition, n })
   }, [zoomIn, zoomOut, getPointerPositionOnUICanvas])
 
-  const getTouchesPosition = useCallback(({ e, left, top }: GetTouchesPositionProps) => {
-    const { touches } = e
-
-    const touchesPosition: Position[] = []
-
-    for (const touch of touches) {
-      const { clientX, clientY } = touch
-
-      touchesPosition.push({
-        x: clientX - left,
-        y: clientY - top
-      })
-    }
-
-    return touchesPosition
-  }, [])
-
-  const onTouchChange = useCallback((e: TouchEvent) => {
-    e.preventDefault()
-
+  const onTouchChange = useCallback((e: TouchEvent<HTMLCanvasElement>) => {
     if (!UICanvas.current || e.touches.length !== 2) return
 
-    const { left, top } = UICanvas.current.getBoundingClientRect()
     const { width: UICanvasWidth, height: UICanvasHeight } = UICanvas.current
 
-    const [touch1, touch2] = getTouchesPosition({ e, left, top })
+    const [touch1, touch2] = getTouchesPositionOnUICanvas(e)!
     const [prevTouch1, prevTouch2] = prevTouchesPosition.current
 
     let prevX1, prevX2, prevY1, prevY2
 
-    if (prevTouch1 === 'center') {
-      const xCentered = UICanvasWidth / 2
-      const yCentered = UICanvasHeight / 2
+    if (!prevTouch1) {
+      const centerX = UICanvasWidth / 2
+      const centerY = UICanvasHeight / 2
 
-      prevX1 = xCentered
-      prevX2 = xCentered
+      prevX1 = centerX
+      prevX2 = centerX
 
-      prevY1 = yCentered
-      prevY2 = yCentered
+      prevY1 = centerY
+      prevY2 = centerY
     } else {
       prevX1 = prevTouch1.x
       prevX2 = prevTouch2.x
@@ -200,47 +173,40 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
     }
 
     prevTouchesPosition.current = [touch1, touch2]
-  }, [UICanvas, zoomIn, zoomOut, getTouchesPosition])
+  }, [UICanvas, zoomIn, zoomOut, getTouchesPositionOnUICanvas])
 
-  const onTouchStart = useCallback((e: TouchEvent) => {
-    if (!UICanvas.current || e.touches.length !== 2) return
+  const onTouchStart = useCallback((e: TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length !== 2) return
 
-    const { left, top } = UICanvas.current.getBoundingClientRect()
-    const [touch1, touch2] = getTouchesPosition({ e, left, top })
+    const [touch1, touch2] = getTouchesPositionOnUICanvas(e)!
     prevTouchesPosition.current = [touch1, touch2]
-  }, [UICanvas, getTouchesPosition])
+  }, [getTouchesPositionOnUICanvas])
 
-  const getRestOfPropsOnClippedImageData = useCallback(({
-    zoom,
-    prevZoom,
-    prevFromCorner,
-    UICanvasWidth,
-    UICanvasHeight
-  }: RestOfPropsOnClippedImageBytes) => {
+  // update transformedImageData
+
+  const getSourcePositionOnClippedImageData = useCallback(({
+    widthOfImageToCut,
+    heightOfImageToCut
+  }: GetSourcePositionOnClippedImageDataProps) => {
+    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvasImageData!
     const { level: currentZoomLevel, pointerPosition: currentPointerPosition } = zoom
-    const { level: prevZoomLevel } = prevZoom
+    const { level: prevZoomLevel } = prevZoom.current
 
-    const widthOfImgToCut = UICanvasWidth * currentZoomLevel
-    const heightOfImgToCut = UICanvasHeight * currentZoomLevel
+    let currentSX: number, currentSY: number
 
-    const centeredSX = (widthOfImgToCut - UICanvasWidth) / 2
-    const centeredSY = (heightOfImgToCut - UICanvasHeight) / 2
-
-    let currentSX, currentSY
-
-    if (currentPointerPosition === 'center') {
-      currentSX = centeredSX
-      currentSY = centeredSY
+    if (!currentPointerPosition) {
+      currentSX = (widthOfImageToCut - UICanvasWidth) / 2
+      currentSY = (heightOfImageToCut - UICanvasHeight) / 2
     } else {
-      currentSX = prevFromCorner.sx + (currentPointerPosition.x * (currentZoomLevel - prevZoomLevel))
-      currentSY = prevFromCorner.sy + (currentPointerPosition.y * (currentZoomLevel - prevZoomLevel))
+      currentSX = prevFromCorner.current.sx + (currentPointerPosition.x * (currentZoomLevel - prevZoomLevel))
+      currentSY = prevFromCorner.current.sy + (currentPointerPosition.y * (currentZoomLevel - prevZoomLevel))
     }
 
-    const sx = Math.max(0, Math.min(currentSX, widthOfImgToCut - UICanvasWidth))
-    const sy = Math.max(0, Math.min(currentSY, heightOfImgToCut - UICanvasHeight))
+    const sx = Math.max(0, Math.min(currentSX, widthOfImageToCut - UICanvasWidth))
+    const sy = Math.max(0, Math.min(currentSY, heightOfImageToCut - UICanvasHeight))
 
-    const isFinalWidthOutOfBounds = sx + UICanvasWidth > widthOfImgToCut
-    const isFinalHeightOutOfBounds = sy + UICanvasHeight > heightOfImgToCut
+    const isFinalWidthOutOfBounds = sx + UICanvasWidth > widthOfImageToCut
+    const isFinalHeightOutOfBounds = sy + UICanvasHeight > heightOfImageToCut
 
     if (isFinalWidthOutOfBounds || isFinalHeightOutOfBounds) {
       throw new ImageError(`
@@ -249,59 +215,20 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
       `)
     }
 
-    return {
-      widthOfImgToCut,
-      heightOfImgToCut,
-      requirements: {
-        finalWidth: UICanvasWidth,
-        finalHeight: UICanvasHeight,
-        fromCorner: { sx, sy }
-      }
-    }
+    const sourcePosition = { sx, sy }
+
+    prevFromCorner.current = sourcePosition
+    prevZoom.current = zoom
+
+    return sourcePosition
+  }, [zoom, UICanvasImageData])
+
+  const stopEventPropagation = useCallback((e: UIEvent) => {
+    e.preventDefault()
   }, [])
 
-  // set zoom listening to UIEvents
-
   useEffect(() => {
-    if (!UICanvas.current) return
-
-    const canvas = UICanvas.current
-
-    canvas.addEventListener('wheel', onWheelChange)
-
-    canvas.addEventListener('touchstart', onTouchStart)
-    canvas.addEventListener('touchmove', onTouchChange)
-
-    return () => {
-      canvas.removeEventListener('wheel', onWheelChange)
-
-      canvas.removeEventListener('touchstart', onTouchStart)
-      canvas.removeEventListener('touchmove', onTouchChange)
-    }
-  }, [UICanvas, onWheelChange, onTouchStart, onTouchChange])
-
-  // replace UICanvas image depending on zoom
-
-  useEffect(() => {
-    if (!UICanvasContext2D.current || !UICanvasImageData) return
-
-    const { width: UICanvasWidth, height: UICanvasHeight, data } = UICanvasImageData
-
-    if (currentToolSelected === 'Crop') {
-      const imageBytes = getModifiedImageBytes({
-        imageBytes: new Uint8Array(data.buffer),
-        imgWidth: UICanvasWidth
-      }, rowOfPixels => rowOfPixels.map(
-        pixel => pixel.map((c, i) => i === 3 ? c : c / 2)
-      ))
-
-      const imageData = UICanvasContext2D.current.createImageData(UICanvasWidth, UICanvasHeight)
-
-      imageData.data.set(imageBytes)
-      UICanvasContext2D.current.putImageData(imageData, 0, 0)
-
-      return
-    }
+    if (!UICanvasImageData || !UICanvas.current) return
 
     const scaledImageData = getScaledImageData(UICanvasImageData, zoom.level)
 
@@ -322,26 +249,45 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
       return
     }
 
-    const restOfProps = getRestOfPropsOnClippedImageData({
-      zoom,
-      prevZoom: prevZoom.current,
-      prevFromCorner: prevFromCorner.current,
-      UICanvasWidth,
-      UICanvasHeight
+    const fromCorner = getSourcePositionOnClippedImageData({
+      widthOfImageToCut: scaledImageData.width,
+      heightOfImageToCut: scaledImageData.height
     })
 
-    prevZoom.current = zoom
-
-    const { sx, sy } = restOfProps.requirements.fromCorner
-    prevFromCorner.current = { sx, sy }
+    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvasImageData
 
     const clippedImageData = getClippedImageData({
       imageDataToCut: scaledImageData,
-      ...restOfProps
+      requirements: {
+        finalWidth: UICanvasWidth,
+        finalHeight: UICanvasHeight,
+        fromCorner
+      }
     })
 
-    UICanvasContext2D.current.putImageData(clippedImageData, 0, 0)
-  }, [zoom, UICanvasImageData, UICanvasContext2D, getRestOfPropsOnClippedImageData, currentToolSelected])
+    setTransformedImageData(clippedImageData)
 
-  return { zoom, zoomIn, zoomOut, restoreZoom }
+    const canvas = UICanvas.current
+
+    canvas.addEventListener('wheel', stopEventPropagation)
+    canvas.addEventListener('touchstart', stopEventPropagation)
+    canvas.addEventListener('touchmove', stopEventPropagation)
+
+    return () => {
+      canvas.removeEventListener('wheel', stopEventPropagation)
+      canvas.removeEventListener('touchstart', stopEventPropagation)
+      canvas.removeEventListener('touchmove', stopEventPropagation)
+    }
+  }, [zoom, UICanvasImageData, UICanvas, getSourcePositionOnClippedImageData, stopEventPropagation])
+
+  return {
+    zoom,
+    zoomIn,
+    zoomOut,
+    restoreZoom,
+    onWheelChange,
+    onTouchStart,
+    onTouchChange,
+    transformedImageData
+  }
 }
