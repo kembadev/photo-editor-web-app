@@ -1,4 +1,4 @@
-import { type AvailableToolsNames } from '../../components/Tools/tools.tsx'
+import { AVAILABLE_TOOLS } from '../../components/Tools/tools.tsx'
 
 import { ZOOM_LIMITS } from '../../consts.ts'
 
@@ -12,7 +12,7 @@ import { dispatchWarning } from '../../methods/dispatchWarning.ts'
 import { ImageError } from '../../error-handling/ImageError.ts'
 
 interface UseZoomProps {
-  currentToolSelected: AvailableToolsNames
+  currentToolSelected: AVAILABLE_TOOLS
 }
 
 type Position = { x: number; y: number }
@@ -66,7 +66,7 @@ export function useZoom ({ currentToolSelected }: UseZoomProps) {
   }, [])
 
   const doZoom = useCallback(({ pointerPosition, n }: ChangeZoom) => {
-    if (!UICanvas.current || currentToolSelected === 'Crop') return
+    if (!UICanvas.current || currentToolSelected === AVAILABLE_TOOLS.CROP) return
 
     const { pointerPosition: accumulatedPointerPosition } = zoom
 

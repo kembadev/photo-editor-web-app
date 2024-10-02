@@ -1,5 +1,5 @@
 import { type EventListener } from '../../types/types.ts'
-import { type AvailableToolsNames } from '../../components/Tools/tools.tsx'
+import { AVAILABLE_TOOLS } from '../../components/Tools/tools.tsx'
 import { type AspectRatio } from '../../components/Tools/Crop/Crop.tsx'
 
 import { EVENTS } from '../../consts.ts'
@@ -16,7 +16,7 @@ import { getClippedImageData } from '../../methods/getClippedImageData.ts'
 import { ImageError } from '../../error-handling/ImageError.ts'
 
 interface UseGridProps {
-  currentToolSelected: AvailableToolsNames
+  currentToolSelected: AVAILABLE_TOOLS
 }
 
 const initialGridSizeAndOffset = {
@@ -255,8 +255,11 @@ export function useGrid ({ currentToolSelected }: UseGridProps) {
     setIsAllowedToDoCrop(false)
   }, [UICanvasImageData, cropCanvas, gridSizeAndOffset])
 
-  const onToggleTool = useCallback((e: CustomEvent<AvailableToolsNames>) => {
-    if (currentToolSelected === 'Crop' && e.detail !== 'Crop') crop()
+  const onToggleTool = useCallback((e: CustomEvent<AVAILABLE_TOOLS>) => {
+    if (currentToolSelected === AVAILABLE_TOOLS.CROP &&
+      e.detail !== AVAILABLE_TOOLS.CROP) {
+      crop()
+    }
   }, [currentToolSelected, crop])
 
   // ---

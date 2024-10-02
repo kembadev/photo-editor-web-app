@@ -1,28 +1,28 @@
 import './ToolsList.css'
 
-import { type AvailableToolsNames, AVAILABLE_TOOLS } from './tools.tsx'
+import { tools, AVAILABLE_TOOLS } from './tools.tsx'
 
 import { EVENTS } from '../../consts.ts'
 
 interface ToolsListProps {
-  currentToolSelected: AvailableToolsNames
+  currentToolSelected: AVAILABLE_TOOLS
 }
 
 export function ToolsList ({ currentToolSelected }: ToolsListProps) {
-  const dispatchToggleTool = (name: AvailableToolsNames) => {
-    const toggleToolEvent = new CustomEvent(EVENTS.TOGGLE_TOOL, { detail: name })
+  const dispatchToggleTool = (desiredTool: AVAILABLE_TOOLS) => {
+    const toggleToolEvent = new CustomEvent(EVENTS.TOGGLE_TOOL, { detail: desiredTool })
     window.dispatchEvent(toggleToolEvent)
   }
 
   return (
     <ul className='tools-list'>
       {
-        AVAILABLE_TOOLS.map(({ name }) => (
-          <li key={name}>
+        tools.map(({ tool, name }) => (
+          <li key={tool}>
             <button
-              onClick={() => { dispatchToggleTool(name) }}
+              onClick={() => { dispatchToggleTool(tool) }}
               style={{
-                backgroundColor: name === currentToolSelected ? 'var(--btnBackground)' : 'transparent',
+                backgroundColor: tool === currentToolSelected ? 'var(--btnBackground)' : 'transparent',
                 borderRadius: '15px'
               }}
             >

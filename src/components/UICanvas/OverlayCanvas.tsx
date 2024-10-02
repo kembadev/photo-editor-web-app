@@ -1,6 +1,6 @@
 import './OverlayCanvas.css'
 
-import { type AvailableToolsNames } from '../Tools/tools.tsx'
+import { type AVAILABLE_TOOLS } from '../Tools/tools.tsx'
 
 import { useGrid, type Corner } from '../../hooks/OverlayCanvas/useGrid.ts'
 import { useUICanvas } from '../../hooks/Canvas/useUICanvas.ts'
@@ -8,7 +8,7 @@ import { useUICanvas } from '../../hooks/Canvas/useUICanvas.ts'
 import { CheckIcon } from '../../common/components/Icons.tsx'
 
 interface OverlayCanvasProps {
-  currentToolSelected: AvailableToolsNames
+  currentToolSelected: AVAILABLE_TOOLS
 }
 
 const corners: Corner[] = [

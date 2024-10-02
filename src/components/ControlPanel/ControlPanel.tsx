@@ -1,6 +1,6 @@
 import './ControlPanel.css'
 
-import { type AvailableToolsNames, AVAILABLE_TOOLS } from '../Tools/tools.tsx'
+import { tools, type AVAILABLE_TOOLS } from '../Tools/tools.tsx'
 
 import { RESTORE } from '../../consts.ts'
 
@@ -14,7 +14,7 @@ import { ToolsList } from '../Tools/ToolsList.tsx'
 import DownloadModal, { DownloadModalHandle } from '../DownloadModal/DownloadModal.tsx'
 
 interface ControlPanelProps {
-  currentToolSelected: AvailableToolsNames
+  currentToolSelected: AVAILABLE_TOOLS
 }
 
 export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
@@ -37,8 +37,8 @@ export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
   }
 
   const ToolFeatures: () => ReactNode = useMemo(() => {
-    return AVAILABLE_TOOLS.find(
-      ({ name }) => name === currentToolSelected
+    return tools.find(
+      ({ tool }) => tool === currentToolSelected
     )!.Component
   }, [currentToolSelected])
 

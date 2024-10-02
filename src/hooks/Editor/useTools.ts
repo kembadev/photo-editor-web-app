@@ -1,11 +1,11 @@
-import { initialTool, type AvailableToolsNames } from '../../components/Tools/tools.tsx'
+import { AVAILABLE_TOOLS } from '../../components/Tools/tools.tsx'
 
 import { useState } from 'react'
 
 export function useTools () {
-  const [currentToolSelected, setCurrentToolSelected] = useState(initialTool)
+  const [currentToolSelected, setCurrentToolSelected] = useState(AVAILABLE_TOOLS.CROP)
 
-  const toggleTool = (desiredTool: AvailableToolsNames) => {
+  const toggleTool = (desiredTool: AVAILABLE_TOOLS) => {
     setCurrentToolSelected(desiredTool)
   }
 
