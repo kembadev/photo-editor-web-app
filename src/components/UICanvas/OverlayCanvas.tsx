@@ -1,15 +1,10 @@
 import './OverlayCanvas.css'
 
-import { type AVAILABLE_TOOLS } from '../Tools/tools.tsx'
-
+import { useLayoutEffect, useRef } from 'react'
 import { useGrid, type Corner } from '../../hooks/OverlayCanvas/useGrid.ts'
 import { useUICanvas } from '../../hooks/Canvas/useUICanvas.ts'
 
 import { CheckIcon } from '../../common/components/Icons.tsx'
-
-interface OverlayCanvasProps {
-  currentToolSelected: AVAILABLE_TOOLS
-}
 
 const corners: Corner[] = [
   { x: 0, y: 0 },
@@ -18,11 +13,11 @@ const corners: Corner[] = [
   { x: 1, y: 1 }
 ]
 
-export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
+export function OverlayCanvas () {
   const {
     crop,
     isAllowedToDoCrop,
-    overlayCanvas,
+    gridCanvasImageData,
     gridSizeAndOffset,
     allowGridToMove,
     disableGridToMove,
@@ -30,9 +25,23 @@ export function OverlayCanvas ({ currentToolSelected }: OverlayCanvasProps) {
     allowGridResizing,
     disableGridResizing,
     handleOnGridResizing
-  } = useGrid({ currentToolSelected })
+  } = useGrid()
 
   const { UICanvasImageData } = useUICanvas()
+
+  const overlayCanvas = useRef<HTMLCanvasElement>(null)
+
+  useLayoutEffect(() => {
+    if (!gridCanvasImageData || !overlayCanvas.current) return
+
+    const { width, height } = gridCanvasImageData
+
+    overlayCanvas.current.width = width
+    overlayCanvas.current.height = height
+
+    const ctx = overlayCanvas.current.getContext('2d'/* , { willReadFrequently: true } */)!
+    ctx.putImageData(gridCanvasImageData, 0, 0)
+  }, [gridCanvasImageData])
 
   return (
     <div

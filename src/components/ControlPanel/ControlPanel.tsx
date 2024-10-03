@@ -4,14 +4,11 @@ import { tools, type AVAILABLE_TOOLS } from '../Tools/tools.tsx'
 
 import { RESTORE } from '../../consts.ts'
 
-import { ReactNode, useCallback, useMemo, useRef } from 'react'
+import { ReactNode, useCallback, useMemo } from 'react'
 import { useControls } from '../../hooks/ControlPanel/useControls.ts'
 import { useLogs } from '../../common/hooks/useLogs.ts'
-import { useDiscardImage } from '../../common/hooks/useDiscardImage.ts'
 
 import { UndoIcon, RedoIcon } from '../../common/components/Icons.tsx'
-import { ToolsList } from '../Tools/ToolsList.tsx'
-import DownloadModal, { DownloadModalHandle } from '../DownloadModal/DownloadModal.tsx'
 
 interface ControlPanelProps {
   currentToolSelected: AVAILABLE_TOOLS
@@ -20,9 +17,6 @@ interface ControlPanelProps {
 export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
   const { restoreCanvas } = useControls()
   const { UILogs } = useLogs()
-  const { discardImage } = useDiscardImage()
-
-  const modalRef = useRef<DownloadModalHandle>(null)
 
   const undo = useCallback(() => {
     restoreCanvas(RESTORE.UNDO)
@@ -31,10 +25,6 @@ export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
   const redo = useCallback(() => {
     restoreCanvas(RESTORE.REDO)
   }, [restoreCanvas])
-
-  const openDownloadModal = () => {
-    modalRef.current?.showModal()
-  }
 
   const ToolFeatures: () => ReactNode = useMemo(() => {
     return tools.find(
@@ -63,7 +53,7 @@ export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
   }, [UILogs])
 
   return (
-    <header className='control-panel'>
+    <header className='editor__control-panel'>
       <section className="control-panel__image-actions">
         <article className="restore-actions">
           <button
@@ -92,29 +82,6 @@ export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
           <ToolFeatures />
         </article>
       </section>
-
-      <section className='control-panel__tools-selector'>
-        <ToolsList currentToolSelected={currentToolSelected} />
-      </section>
-
-      <section className='control-panel__save-discard'>
-        <button
-          className="save-btn"
-          title="Save image"
-          onClick={openDownloadModal}
-          aria-describedby='download-modal'
-        >
-          Save
-        </button>
-        <button
-          className='discard-btn'
-          title='Discard image'
-          onClick={discardImage}
-        >
-          Discard
-        </button>
-      </section>
-      <DownloadModal ref={modalRef} />
     </header>
   )
 }

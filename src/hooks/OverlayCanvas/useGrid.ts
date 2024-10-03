@@ -1,23 +1,17 @@
 import { type EventListener } from '../../types/types.ts'
-import { AVAILABLE_TOOLS } from '../../components/Tools/tools.tsx'
 import { type AspectRatio } from '../../components/Tools/Crop/Crop.tsx'
 
 import { EVENTS } from '../../consts.ts'
 import { IS_DEVELOPMENT } from '../../config.ts'
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, TouchEvent, MouseEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, TouchEvent, MouseEvent } from 'react'
 import { usePosition } from '../../common/hooks/usePosition.ts'
 import { useControls } from '../ControlPanel/useControls.ts'
 import { useUICanvas } from '../Canvas/useUICanvas.ts'
 import { useOffscreenCanvas } from '../Canvas/useOffscreenCanvas.ts'
 
-import { doUintsMatch } from '../../common/helpers/doUintsMatch.ts'
 import { getClippedImageData } from '../../methods/getClippedImageData.ts'
 import { ImageError } from '../../error-handling/ImageError.ts'
-
-interface UseGridProps {
-  currentToolSelected: AVAILABLE_TOOLS
-}
 
 const initialGridSizeAndOffset = {
   width: { sx: 0, dw: 0 },
@@ -37,10 +31,10 @@ interface HandleOnGridResizingProps {
   corner: Corner
 }
 
-export function useGrid ({ currentToolSelected }: UseGridProps) {
-  const [isAllowedToDoCrop, setIsAllowedToDoCrop] = useState(false)
+export function useGrid () {
   const [gridSizeAndOffset, setGridSizeAndOffset] = useState(initialGridSizeAndOffset)
 
+  const [isAllowedToDoCrop, setIsAllowedToDoCrop] = useState(false)
   const [isTheGridAllowedToMove, setIsTheGridAllowedToMove] = useState(false)
   const [isChangingTheGridSizeAllowed, setIsChangingTheGridSizeAllowed] = useState(false)
 
@@ -51,14 +45,13 @@ export function useGrid ({ currentToolSelected }: UseGridProps) {
   const { UICanvasImageData } = useUICanvas()
   const { offscreenCanvasImageData } = useOffscreenCanvas()
 
-  const overlayCanvas = useRef<HTMLCanvasElement>(null)
+  const [gridCanvasImageData, setGridCanvasImageData] = useState(UICanvasImageData)
+  const latestUICanvasImageData = useRef(UICanvasImageData)
 
   const prevGridSizeAndOffset = useRef(initialGridSizeAndOffset)
 
   const prevPointerPositionOnMoving = useRef({ x: 0, y: 0 })
   const prevPointerPositionOnResizing = useRef({ x: 0, y: 0 })
-
-  const prevUICanvasImageBytes = useRef(new Uint8Array())
 
   // grid move
 
@@ -255,13 +248,6 @@ export function useGrid ({ currentToolSelected }: UseGridProps) {
     setIsAllowedToDoCrop(false)
   }, [UICanvasImageData, cropCanvas, gridSizeAndOffset])
 
-  const onToggleTool = useCallback((e: CustomEvent<AVAILABLE_TOOLS>) => {
-    if (currentToolSelected === AVAILABLE_TOOLS.CROP &&
-      e.detail !== AVAILABLE_TOOLS.CROP) {
-      crop()
-    }
-  }, [currentToolSelected, crop])
-
   // ---
 
   const onAspectRatioChange = useCallback((e: CustomEvent<AspectRatio>) => {
@@ -308,18 +294,20 @@ export function useGrid ({ currentToolSelected }: UseGridProps) {
 
   useEffect(() => {
     window.addEventListener(EVENTS.ASPECT_RATIO, onAspectRatioChange as EventListener)
-    window.addEventListener(EVENTS.TOGGLE_TOOL, onToggleTool as EventListener)
+    window.addEventListener(EVENTS.TOGGLE_TOOL, crop)
 
     return () => {
       window.removeEventListener(EVENTS.ASPECT_RATIO, onAspectRatioChange as EventListener)
-      window.removeEventListener(EVENTS.TOGGLE_TOOL, onToggleTool as EventListener)
+      window.removeEventListener(EVENTS.TOGGLE_TOOL, crop)
     }
-  }, [onAspectRatioChange, onToggleTool])
+  }, [onAspectRatioChange, crop])
 
   // reset gridSizeAndOffset
 
   useEffect(() => {
     if (!UICanvasImageData) return
+
+    latestUICanvasImageData.current = UICanvasImageData
 
     const { width: UICanvasWidth, height: UICanvasHeight } = UICanvasImageData
 
@@ -329,23 +317,14 @@ export function useGrid ({ currentToolSelected }: UseGridProps) {
     })
 
     setIsAllowedToDoCrop(false)
-  }, [UICanvasImageData])
+  }, [UICanvasImageData, onAspectRatioChange])
 
   // re-draw overlayCanvas
 
-  useLayoutEffect(() => {
-    if (!UICanvasImageData || !overlayCanvas.current) return
+  useEffect(() => {
+    if (!latestUICanvasImageData.current) return
 
-    const { width: UICanvasWidth, height: UICanvasHeight } = UICanvasImageData
-
-    const UICanvasImageBytes = new Uint8Array(UICanvasImageData.data.buffer)
-
-    if (!doUintsMatch(UICanvasImageBytes, prevUICanvasImageBytes.current)) {
-      prevUICanvasImageBytes.current = UICanvasImageBytes
-      return
-    }
-
-    prevUICanvasImageBytes.current = UICanvasImageBytes
+    const { width: UICanvasWidth, height: UICanvasHeight } = latestUICanvasImageData.current
 
     const { sx, dw } = gridSizeAndOffset.width
     const { sy, dh } = gridSizeAndOffset.height
@@ -376,7 +355,7 @@ export function useGrid ({ currentToolSelected }: UseGridProps) {
     }
 
     const clippedImageData = getClippedImageData({
-      imageDataToCut: UICanvasImageData,
+      imageDataToCut: latestUICanvasImageData.current,
       requirements: {
         finalWidth: dw,
         finalHeight: dh,
@@ -387,17 +366,12 @@ export function useGrid ({ currentToolSelected }: UseGridProps) {
       }
     })
 
-    overlayCanvas.current.width = dw
-    overlayCanvas.current.height = dh
-
-    const overlayCtx = overlayCanvas.current.getContext('2d')!
-
-    overlayCtx.putImageData(clippedImageData, 0, 0)
-  }, [gridSizeAndOffset, UICanvasImageData])
+    setGridCanvasImageData(clippedImageData)
+  }, [gridSizeAndOffset])
 
   return {
     isAllowedToDoCrop,
-    overlayCanvas,
+    gridCanvasImageData,
     gridSizeAndOffset,
     allowGridToMove,
     disableGridToMove,

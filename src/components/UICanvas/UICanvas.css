@@ -1,42 +1,67 @@
 .UICanvas-container {
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  align-items: center;
   flex: 1;
-  padding: 0 20px;
 
-  .UICanvas {
-    position: relative;
-    z-index: 150;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: var(--vertical-gap);
+  position: relative;
+}
 
-  .transparent-background {
-    background:
-      repeating-linear-gradient(#fff 0 10px,
-        #ccc 10px 20px),
-      repeating-linear-gradient(90deg,
-        #fff 0 10px,
-        #ccc 10px 20px);
-    background-blend-mode:
-      multiply
-      /* difference */
-    ;
-    position: absolute;
+.UICanvas-container>div {
+  display: flex;
+  gap: 35px;
+}
+
+.non-destructive-actions {
+  flex: 1;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.discard-image--btn {
+  width: 35px;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+
+  &:hover {
+    background-color: rgb(209, 26, 56);
   }
 }
 
-.UICanvas-container .zoom-controls-container {
-  line-height: 1.2em;
+.non-destructive-actions .transparent-background--btn-controller {
+  --ball-size: 25px;
+
+  height: fit-content;
+  user-select: none;
+  background-color: transparent;
+  padding: 3px 6px;
+  border: 1px solid #eee;
+  border-radius: var(--borderRadius);
+  opacity: 0.8;
+  font-size: 1em;
+  position: relative;
+
+  div {
+    width: var(--ball-size);
+    aspect-ratio: 1;
+    display: none;
+    border-radius: 50%;
+    background-color: #fff;
+    position: absolute;
+    transition: left 100ms;
+  }
+}
+
+.non-destructive-actions .zoom-controls {
   display: flex;
   flex-direction: row;
   align-items: center;
   border-radius: 2px;
-  font-size: 0.95em;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 10000;
+  position: relative;
 
   div {
     width: 35px;
@@ -48,8 +73,8 @@
     content: "";
     height: 100%;
     width: 1px;
+    background-color: var(--textMain);
     position: absolute;
-    background-color: var(--borderColor);
   }
 
   svg {
@@ -57,6 +82,67 @@
   }
 
   span {
+    user-select: none;
     margin-left: 5px;
+  }
+}
+
+.UICanvas__user-view .save-image--btn {
+  width: 35px;
+  aspect-ratio: 1;
+  background-color: var(--darkMain);
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 500;
+  opacity: 0.9;
+}
+
+.UICanvas__user-view {
+  flex: 1;
+
+  position: relative;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  align-items: center;
+}
+
+.UICanvas__user-view .UICanvas {
+  position: relative;
+  z-index: 50;
+}
+
+.UICanvas__user-view .transparent-background {
+  position: absolute;
+
+  background:
+    repeating-linear-gradient(#fff 0 10px,
+      #ccc 10px 20px),
+    repeating-linear-gradient(90deg,
+      #fff 0 10px,
+      #ccc 10px 20px);
+  background-blend-mode: multiply;
+}
+
+@media (width < 600px) {
+  .non-destructive-actions {
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .non-destructive-actions .transparent-background--btn-controller {
+    height: calc(var(--ball-size) + 2px);
+    width: calc(var(--ball-size) * 2);
+    border-radius: 20px;
+    background-color: var(--btnBackground);
+
+    span {
+      display: none;
+    }
+
+    div {
+      display: block;
+    }
   }
 }

@@ -6,9 +6,9 @@ import { useLoading } from '../../common/hooks/useLoading.ts'
 import { useImageFile } from '../../common/hooks/useImageFile.ts'
 import { useLoadEditor } from '../../hooks/Editor/useLoadEditor.ts'
 
+import { ToolSelector } from '../ToolSelector/ToolSelector.tsx'
 import { UICanvas } from '../UICanvas/UICanvas.tsx'
 import { ControlPanel } from '../ControlPanel/ControlPanel.tsx'
-import Loading from '../../common/components/Loading.tsx'
 
 export default function Editor () {
   const { isLoading, updateIsLoading } = useLoading({ initialState: true })
@@ -31,20 +31,15 @@ export default function Editor () {
   }, [providedImgFile, onEditorLoad, updateIsLoading])
 
   return (
-    <>
-      {isLoading && <Loading />}
-      <main
-        className='editor'
-        style={{
-          visibility: isLoading ? 'hidden' : 'visible'
-        }}
-      >
-        <UICanvas
-          currentToolSelected={currentToolSelected}
-          toggleTool={toggleTool}
-        />
+    <main className={isLoading ? 'editor hidden' : 'editor'}>
+      <ToolSelector
+        currentToolSelected={currentToolSelected}
+        toggleTool={toggleTool}
+      />
+      <section className='editor__interactivity-section'>
+        <UICanvas currentToolSelected={currentToolSelected} />
         <ControlPanel currentToolSelected={currentToolSelected} />
-      </main>
-    </>
+      </section>
+    </main>
   )
 }

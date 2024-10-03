@@ -6,22 +6,24 @@ import { AVAILABLE_TOOLS } from '../Tools/tools.tsx'
 import { EVENTS, ZOOM_LIMITS } from '../../consts.ts'
 import { IS_DEVELOPMENT } from '../../config.ts'
 
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useUICanvas } from '../../hooks/Canvas/useUICanvas.ts'
 import { useOffscreenCanvas } from '../../hooks/Canvas/useOffscreenCanvas.ts'
 import { useZoom } from '../../hooks/Canvas/useZoom.ts'
+import { useDiscardImage } from '../../common/hooks/useDiscardImage.ts'
 
-import { PlusIcon, MinusIcon } from '../../common/components/Icons.tsx'
+import { PlusIcon, MinusIcon, XIcon, DownloadIcon } from '../../common/components/Icons.tsx'
 import { OverlayCanvas } from './OverlayCanvas.tsx'
+
+import DownloadModal, { type DownloadModalHandle } from '../DownloadModal/DownloadModal.tsx'
 
 const LazyOffscreenCanvasDev = lazy(() => import('./OffscreenCanvasDev.tsx'))
 
 interface CanvasProps {
-  currentToolSelected: AVAILABLE_TOOLS;
-  toggleTool: (desiredTool: AVAILABLE_TOOLS) => void
+  currentToolSelected: AVAILABLE_TOOLS
 }
 
-export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
+export function UICanvas ({ currentToolSelected }: CanvasProps) {
   const [isBannerVisible, setIsBannerVisible] = useState(true)
 
   const {
@@ -48,16 +50,19 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
     transformedImageData
   } = useZoom({ currentToolSelected })
 
+  const { discardImage } = useDiscardImage()
+
+  const downloadModalRef = useRef<DownloadModalHandle>(null)
+
+  const openDownloadModal = () => {
+    downloadModalRef.current?.showModal()
+  }
+
+  // update UICanvasRef
+
   const onToggleTool = useCallback((e: CustomEvent<AVAILABLE_TOOLS>) => {
-    const desiredTool = e.detail
-
-    if (currentToolSelected !== AVAILABLE_TOOLS.CROP &&
-      desiredTool === AVAILABLE_TOOLS.CROP) {
-      restoreZoom()
-    }
-
-    toggleTool(desiredTool)
-  }, [currentToolSelected, toggleTool, restoreZoom])
+    if (e.detail === AVAILABLE_TOOLS.CROP) restoreZoom()
+  }, [restoreZoom])
 
   useLayoutEffect(() => {
     if (!transformedImageData || !UICanvas.current || !UICanvasContext2D.current) return
@@ -76,6 +81,8 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
     }
   }, [transformedImageData, UICanvas, UICanvasContext2D, onToggleTool])
 
+  // update offscreenCanvasRef
+
   useEffect(() => {
     if (!offscreenCanvasImageData ||
       !offscreenCanvas.current ||
@@ -90,91 +97,108 @@ export function UICanvas ({ currentToolSelected, toggleTool }: CanvasProps) {
   }, [offscreenCanvasImageData, offscreenCanvas, offscreenCanvasContext2D])
 
   return (
-    <div
-      className='UICanvas-container'
-      ref={UICanvasContainer}
-      style={{ position: 'relative' }}
-    >
-      <Suspense>
-        {IS_DEVELOPMENT && <LazyOffscreenCanvasDev />}
-      </Suspense>
-      <canvas
-        className='UICanvas'
-        ref={UICanvas}
+    <>
+      <article className='UICanvas-container'>
+        <div>
+          <div className='non-destructive-actions'>
+            <button
+              title='Toggle transparent background'
+              className='transparent-background--btn-controller'
+              onClick={() => {
+                setIsBannerVisible(!isBannerVisible)
+              }}
+            >
+              <span>
+                {
+                  isBannerVisible
+                    ? 'Hide transparent background'
+                    : 'Show transparent background'
+                }
+              </span>
+              <div
+                style={{
+                  left: isBannerVisible ? 'calc(100% - var(--ball-size))' : 0,
+                  opacity: isBannerVisible ? 1 : 0.3
+                }}
+              />
+            </button>
+            <section
+              className='zoom-controls'
+              style={{
+                pointerEvents: currentToolSelected === AVAILABLE_TOOLS.CROP ? 'none' : 'auto'
+              }}
+            >
+              <div
+                title='Zoom In'
+                onClick={() => zoomIn()}
+                style={{
+                  backgroundColor: zoom.level >= ZOOM_LIMITS.MAX || currentToolSelected === AVAILABLE_TOOLS.CROP
+                    ? 'transparent'
+                    : 'var(--btnBackground)',
+                  cursor: zoom.level >= ZOOM_LIMITS.MAX || currentToolSelected === AVAILABLE_TOOLS.CROP
+                    ? 'auto'
+                    : 'pointer'
+                }}
+              >
+                <PlusIcon />
+              </div>
+              <div
+                title='Zoom Out'
+                onClick={() => zoomOut()}
+                style={{
+                  backgroundColor: zoom.level <= ZOOM_LIMITS.MIN || currentToolSelected === AVAILABLE_TOOLS.CROP
+                    ? 'transparent'
+                    : 'var(--btnBackground)',
+                  cursor: zoom.level <= ZOOM_LIMITS.MIN || currentToolSelected === AVAILABLE_TOOLS.CROP
+                    ? 'auto'
+                    : 'pointer'
+                }}
+              >
+                <MinusIcon />
+              </div>
+              <span>{Math.floor(zoom.level * 100)}%</span>
+            </section>
+          </div>
+          <button
+            title='Discard image'
+            className='discard-image--btn'
+            onClick={discardImage}
+          >
+            <XIcon />
+          </button>
+        </div>
+        <header className='UICanvas__user-view' ref={UICanvasContainer}>
+          <button
+            title='Download image'
+            className='save-image--btn'
+            aria-describedby='download-modal'
+            onClick={openDownloadModal}
+          >
+            <DownloadIcon />
+          </button>
+          <canvas
+            className='UICanvas'
+            ref={UICanvas}
 
-        onWheel={onWheelChange}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchChange}
-      />
-      <div
-        className='transparent-background'
-        style={{
-          opacity: isBannerVisible ? 1 : 0,
-          width: UICanvasImageData ? UICanvasImageData.width : 0,
-          height: UICanvasImageData ? UICanvasImageData.height : 0
-        }}
-      />
-      <button
-        title='This does not affect your image in any way'
-        style={{
-          backgroundColor: 'transparent',
-          fontSize: '0.75rem',
-          padding: '3px',
-          border: '1px solid #eee',
-          borderRadius: '3px',
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          zIndex: 1000,
-          opacity: 0.5
-        }}
-        onClick={() => {
-          setIsBannerVisible(!isBannerVisible)
-        }}
-      >
-        {isBannerVisible ? 'Hide transparent background' : 'Show transparent background'}
-      </button>
-      {
-        currentToolSelected === AVAILABLE_TOOLS.CROP && (
-          <OverlayCanvas currentToolSelected={currentToolSelected} />
-        )
-      }
-      <section
-        className='zoom-controls-container'
-        style={{
-          pointerEvents: currentToolSelected === AVAILABLE_TOOLS.CROP ? 'none' : 'auto'
-        }}
-      >
-        <div
-          title='Zoom In'
-          onClick={() => zoomIn()}
-          style={{
-            backgroundColor: zoom.level >= ZOOM_LIMITS.MAX || currentToolSelected === AVAILABLE_TOOLS.CROP
-              ? 'transparent'
-              : 'var(--btnBackground)',
-            cursor: zoom.level >= ZOOM_LIMITS.MAX || currentToolSelected === AVAILABLE_TOOLS.CROP
-              ? 'auto'
-              : 'pointer'
-          }}
-        >
-          <PlusIcon />
-        </div>
-        <div
-          title='Zoom Out'
-          onClick={() => zoomOut()}
-          style={{
-            backgroundColor: zoom.level <= ZOOM_LIMITS.MIN || currentToolSelected === AVAILABLE_TOOLS.CROP
-              ? 'transparent'
-              : 'var(--btnBackground)',
-            cursor: zoom.level <= ZOOM_LIMITS.MIN || currentToolSelected === AVAILABLE_TOOLS.CROP
-              ? 'auto'
-              : 'pointer'
-          }}
-        >
-          <MinusIcon />
-        </div>
-        <span>{Math.floor(zoom.level * 100)}%</span>
-      </section>
-    </div>
+            onWheel={onWheelChange}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchChange}
+          />
+          {currentToolSelected === AVAILABLE_TOOLS.CROP && <OverlayCanvas />}
+          <div
+            className='transparent-background'
+            style={{
+              display: isBannerVisible ? 'block' : 'none',
+              width: UICanvasImageData ? UICanvasImageData.width : 0,
+              height: UICanvasImageData ? UICanvasImageData.height : 0
+            }}
+          />
+          <Suspense>
+            {IS_DEVELOPMENT && <LazyOffscreenCanvasDev />}
+          </Suspense>
+        </header>
+      </article>
+      <DownloadModal ref={downloadModalRef} />
+    </>
   )
 }

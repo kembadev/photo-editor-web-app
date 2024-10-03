@@ -6,7 +6,7 @@ export default function UICanvasProvider ({ children }: { children: ReactNode })
 
   const UICanvas = useRef<HTMLCanvasElement>(null)
   const UICanvasContext2D = useRef<UICanvasContext2DRef>(null)
-  const UICanvasContainer = useRef<HTMLDivElement>(null)
+  const UICanvasContainer = useRef<HTMLHeadingElement>(null)
 
   const contextValue = {
     UICanvas,

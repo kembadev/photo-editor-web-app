@@ -78,7 +78,7 @@
       width: 65px;
       text-align: center;
       background-color: var(--darkMain);
-      color: var(--orange);
+      color: #8596dd;
     }
 
     small {
@@ -150,14 +150,8 @@
   grid-template-columns: 2fr 1fr;
 
   button:first-child {
-    background-color: var(--orange);
-    color: var(--dark);
     border: none;
     border-radius: var(--borderRadius) 0 0 var(--borderRadius);
-
-    &:hover {
-      background-color: color-mix(in srgb, var(--dark) 15%, var(--orange));
-    }
   }
 
   button:last-child {

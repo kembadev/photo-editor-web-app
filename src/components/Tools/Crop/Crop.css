@@ -34,7 +34,7 @@
 .crop-features__aspect-ratio--selector {
   min-width: 50vw;
   display: none;
-  background-color: var(--darkMain);
+  background-color: #24262b;
   border-radius: 8px;
 
   position: absolute;
@@ -60,7 +60,7 @@
   }
 
   li:hover {
-    background-color: color-mix(in srgb, var(--textMain) 5%, transparent);
+    background-color: rgba(11, 14, 18, 0.5);
   }
 
   li+li {

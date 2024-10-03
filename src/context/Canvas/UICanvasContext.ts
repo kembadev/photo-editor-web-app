@@ -5,7 +5,7 @@ export type UICanvasImageDataState = ImageData | null
 
 export interface UICanvasContextValue {
   UICanvas: RefObject<HTMLCanvasElement>;
-  UICanvasContainer: RefObject<HTMLDivElement>;
+  UICanvasContainer: RefObject<HTMLHeadingElement>;
   UICanvasContext2D: MutableRefObject<UICanvasContext2DRef>;
   UICanvasImageData: UICanvasImageDataState;
   setUICanvasImageData: Dispatch<SetStateAction<UICanvasImageDataState>>

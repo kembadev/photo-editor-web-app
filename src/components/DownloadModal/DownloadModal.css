@@ -1,7 +1,6 @@
 :root {
   --dark: #222;
   --light: #faf3e1;
-  --orange: #ff6e1f;
   --fontWeight: 500;
   --border: 1px solid color-mix(in srgb, transparent 50%, var(--light));
 }

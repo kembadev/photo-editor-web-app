@@ -1,0 +1,79 @@
+:root {
+  --tool-bd-radius: 8px;
+  --tool-selector-border: 1px solid #e3e3e3;
+}
+
+.editor__tool-selector {
+  &>* {
+    background-color: var(--darkMain)
+  }
+}
+
+.tool-selector--display-btn {
+  width: 100%;
+  display: none;
+  padding: 0;
+  border-radius: 0;
+  border: var(--tool-selector-border);
+  opacity: 0.9;
+
+  label {
+    height: 1.5rem;
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+  }
+
+  &:has(input:checked) {
+    border-bottom: none;
+  }
+}
+
+.tool-selector__list {
+  min-width: 65px;
+  display: flex;
+  flex-direction: column;
+  list-style-type: none;
+  border: var(--tool-selector-border);
+  border-radius: 0 0 var(--tool-bd-radius) var(--tool-bd-radius);
+  margin: 0;
+  padding: 0;
+}
+
+.tool-selector__list--tool {
+  &+li {
+    border-top: 1px solid #e3e3e3;
+  }
+
+  &:last-child,
+  button:last-child {
+    border-radius: inherit;
+  }
+
+  button {
+    width: 100%;
+    border: none;
+    padding: 7px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (width < 450px) {
+  .editor__tool-selector {
+    position: absolute;
+    z-index: 100;
+  }
+
+  .tool-selector__list {
+    visibility: hidden;
+  }
+
+  .tool-selector--display-btn {
+    display: block;
+
+    &:has(input:checked)+.tool-selector__list {
+      border-top: none;
+      visibility: visible;
+    }
+  }
+}
