@@ -118,7 +118,7 @@ export function UICanvas ({ currentToolSelected }: CanvasProps) {
               <div
                 style={{
                   left: isBannerVisible ? 'calc(100% - var(--ball-size))' : 0,
-                  opacity: isBannerVisible ? 1 : 0.3
+                  opacity: isBannerVisible ? 1 : 0.55
                 }}
               />
             </button>
@@ -131,28 +131,36 @@ export function UICanvas ({ currentToolSelected }: CanvasProps) {
               <div
                 title='Zoom In'
                 onClick={() => zoomIn()}
-                style={{
-                  backgroundColor: zoom.level >= ZOOM_LIMITS.MAX || currentToolSelected === AVAILABLE_TOOLS.CROP
-                    ? 'transparent'
-                    : 'var(--btnBackground)',
-                  cursor: zoom.level >= ZOOM_LIMITS.MAX || currentToolSelected === AVAILABLE_TOOLS.CROP
-                    ? 'auto'
-                    : 'pointer'
-                }}
+                style={
+                  zoom.level >= ZOOM_LIMITS.MAX || currentToolSelected === AVAILABLE_TOOLS.CROP
+                    ? {
+                        backgroundColor: 'transparent',
+                        cursor: 'auto'
+                      }
+                    : {
+                        backgroundColor: 'var(--btn-bg-yellow)',
+                        color: 'var(--btn-bg-yellow-text-color)',
+                        cursor: 'pointer'
+                      }
+                }
               >
                 <PlusIcon />
               </div>
               <div
                 title='Zoom Out'
                 onClick={() => zoomOut()}
-                style={{
-                  backgroundColor: zoom.level <= ZOOM_LIMITS.MIN || currentToolSelected === AVAILABLE_TOOLS.CROP
-                    ? 'transparent'
-                    : 'var(--btnBackground)',
-                  cursor: zoom.level <= ZOOM_LIMITS.MIN || currentToolSelected === AVAILABLE_TOOLS.CROP
-                    ? 'auto'
-                    : 'pointer'
-                }}
+                style={
+                  zoom.level <= ZOOM_LIMITS.MIN || currentToolSelected === AVAILABLE_TOOLS.CROP
+                    ? {
+                        backgroundColor: 'transparent',
+                        cursor: 'auto'
+                      }
+                    : {
+                        backgroundColor: 'var(--btn-bg-yellow)',
+                        color: 'var(--btn-bg-yellow-text-color)',
+                        cursor: 'pointer'
+                      }
+                }
               >
                 <MinusIcon />
               </div>

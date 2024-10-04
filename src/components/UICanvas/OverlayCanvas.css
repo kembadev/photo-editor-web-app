@@ -55,8 +55,7 @@
   border: none;
   position: absolute;
   border-radius: 0 0 8px 8px;
-  border-top: none;
-  background-color: color-mix(in srgb, var(--highlightColor) 75%, transparent);
+  background-color: var(--btn-bg-blue);
   top: 100%;
   right: 0;
 

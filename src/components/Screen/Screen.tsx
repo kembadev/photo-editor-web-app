@@ -1,5 +1,3 @@
-import './Screen.css'
-
 import { getInternetConnectionStatus } from '../../common/helpers/NetworkStatus.ts'
 
 import { lazy, Suspense } from 'react'

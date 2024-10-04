@@ -10,12 +10,25 @@ interface WarningProps {
 }
 
 export function Warning ({ message, color = 'red' }: WarningProps) {
-  const backgroundColor: string = useMemo(() => {
-    if (color === 'red') return '#b53471'
+  const styleColors = useMemo(() => {
+    if (color === 'red') {
+      return {
+        backgroundColor: '#b53471',
+        textColor: 'var(--main-text-color)'
+      }
+    }
 
-    if (color === 'yellow') return '#f6b93b'
+    if (color === 'yellow') {
+      return {
+        backgroundColor: '#f6b93b',
+        textColor: 'var(--btn-bg-yellow-text-color)'
+      }
+    }
 
-    return '#01a3a4'
+    return {
+      backgroundColor: '#01a3a4',
+      textColor: 'var(--main-text-color)'
+    }
   }, [color])
 
   return (
@@ -24,7 +37,8 @@ export function Warning ({ message, color = 'red' }: WarningProps) {
       aria-live='assertive'
       role='alert'
       style={{
-        backgroundColor
+        backgroundColor: styleColors.backgroundColor,
+        color: styleColors.textColor
       }}
     >
       <span>

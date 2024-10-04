@@ -35,9 +35,17 @@ export function ToolSelector ({ currentToolSelected, toggleTool }: ToolSelectorP
           tools.map(({ tool, name }) => (
             <li key={tool} className='tool-selector__list--tool'>
               <button
-                style={{
-                  backgroundColor: tool === currentToolSelected ? 'var(--btnBackground)' : 'transparent'
-                }}
+                style={
+                  tool === currentToolSelected
+                    ? {
+                        backgroundColor: 'var(--btn-bg-yellow)',
+                        color: 'var(--btn-bg-yellow-text-color)'
+                      }
+                    : {
+                        backgroundColor: 'transparent',
+                        color: 'var(--main-text-color)'
+                      }
+                  }
                 onClick={() => onToggleTool(tool)}
               >
                 {name}

@@ -1,6 +1,6 @@
 <div align="center">
 	<h1>Photo editor made in React</h1>
-	<img src="https://i.imgur.com/t2l1A8c.png" width="400px">
+	<img src="https://i.imgur.com/3Y8Bcon.png" width="400px">
 </div>
 
 ## Features

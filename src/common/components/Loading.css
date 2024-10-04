@@ -1,8 +1,8 @@
 .spinner-loading {
-  --length: 50px;
-  --correction-length: calc(var(--length) / -2);
+  --loading-spinner-radius: 25px;
+  --correction-position: calc(var(--loading-spinner-radius) * -1);
 
-  width: var(--length);
+  width: calc(var(--loading-spinner-radius) * 2);
   aspect-ratio: 1;
   border-radius: 50%;
   position: absolute;
@@ -15,10 +15,10 @@
 
 @keyframes rotation {
   from {
-    transform: translate(var(--correction-length), var(--correction-length));
+    transform: translate(var(--correction-position), var(--correction-position));
   }
 
   to {
-    transform: translate(var(--correction-length), var(--correction-length)) rotate(1turn);
+    transform: translate(var(--correction-position), var(--correction-position)) rotate(1turn);
   }
 }

@@ -1,4 +1,0 @@
-:root {
-  --borderColor: #dee3f850;
-  --btnBackground: color-mix(in srgb, var(--contrastColor) 10%, var(--highlightColor))
-}

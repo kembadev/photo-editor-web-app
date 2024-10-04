@@ -59,20 +59,35 @@ export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
           <button
             title="Undo"
             onClick={undo}
-            style={{
-              backgroundColor: isPrevLogAvailable ? 'var(--btnBackground)' : 'transparent',
-              cursor: isPrevLogAvailable ? 'pointer' : 'auto'
-            }}
+            style={
+              isPrevLogAvailable
+                ? {
+                    backgroundColor: 'var(--btn-bg-yellow)',
+                    cursor: 'pointer'
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: 'var(--main-text-color)',
+                    cursor: 'auto'
+                  }}
           >
             <UndoIcon />
           </button>
           <button
             title="Redo"
             onClick={redo}
-            style={{
-              backgroundColor: isPostLogAvailable ? 'var(--btnBackground)' : 'transparent',
-              cursor: isPostLogAvailable ? 'pointer' : 'auto'
-            }}
+            style={
+              isPostLogAvailable
+                ? {
+                    backgroundColor: 'var(--btn-bg-yellow)',
+                    cursor: 'pointer'
+                  }
+                : {
+                    backgroundColor: 'transparent',
+                    color: 'var(--main-text-color)',
+                    cursor: 'auto'
+                  }
+              }
           >
             <RedoIcon />
           </button>

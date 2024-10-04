@@ -5,7 +5,7 @@
 
 .editor__tool-selector {
   &>* {
-    background-color: var(--darkMain)
+    background-color: var(--main-bg-color);
   }
 }
 
@@ -22,10 +22,6 @@
     display: grid;
     place-content: center;
     cursor: pointer;
-  }
-
-  &:has(input:checked) {
-    border-bottom: none;
   }
 }
 
@@ -45,9 +41,12 @@
     border-top: 1px solid #e3e3e3;
   }
 
-  &:last-child,
-  button:last-child {
+  &:last-child {
     border-radius: inherit;
+
+    button {
+      border-radius: inherit;
+    }
   }
 
   button {
@@ -55,13 +54,14 @@
     border: none;
     padding: 7px;
     font-size: 0.75rem;
+    border-radius: 0;
   }
 }
 
 @media (width < 450px) {
   .editor__tool-selector {
     position: absolute;
-    z-index: 100;
+    z-index: 500;
   }
 
   .tool-selector__list {
@@ -69,7 +69,7 @@
   }
 
   .tool-selector--display-btn {
-    display: block;
+    display: grid;
 
     &:has(input:checked)+.tool-selector__list {
       border-top: none;

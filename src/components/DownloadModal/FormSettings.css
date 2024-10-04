@@ -19,13 +19,15 @@
 }
 
 .download-modal__form .config-controls {
+  --font-weight: 500;
+
   display: flex;
   flex-direction: column;
   gap: 10px;
 
   &>* {
     padding-bottom: 10px;
-    border-bottom: var(--border);
+    border-bottom: var(--download-modal-border);
 
   }
 
@@ -38,7 +40,7 @@
   input {
     border: none;
     outline: none;
-    border-radius: var(--borderRadius);
+    border-radius: var(--main-border-radius);
   }
 }
 
@@ -49,7 +51,6 @@
 
   article {
     display: flex;
-    flex-direction: row;
     gap: 0.9em;
 
     input {
@@ -62,9 +63,9 @@
       font-size: 0.9em;
       line-height: 1.3em;
       text-align: center;
-      border: var(--border);
-      border-radius: var(--borderRadius);
-      font-weight: var(--fontWeight);
+      border: var(--download-modal-border);
+      border-radius: var(--main-border-radius);
+      font-weight: var(--font-weight);
     }
   }
 
@@ -77,7 +78,7 @@
       box-sizing: border-box;
       width: 65px;
       text-align: center;
-      background-color: var(--darkMain);
+      background-color: var(--main-bg-color);
       color: #8596dd;
     }
 
@@ -92,7 +93,7 @@
     display: inline-block;
     font-size: 0.9em;
     margin-bottom: 6px;
-    font-weight: var(--fontWeight);
+    font-weight: var(--font-weight);
   }
 
   &>div {
@@ -114,7 +115,7 @@
   select {
     border: none;
     outline: none;
-    border-radius: var(--borderRadius);
+    border-radius: var(--main-border-radius);
     cursor: pointer;
   }
 
@@ -151,14 +152,15 @@
 
   button:first-child {
     border: none;
-    border-radius: var(--borderRadius) 0 0 var(--borderRadius);
+    border-radius: var(--main-border-radius) 0 0 var(--main-border-radius);
+    background-color: var(--btn-bg-blue);
   }
 
   button:last-child {
     background-color: transparent;
-    border: var(--border);
+    border: var(--download-modal-border);
     border-left: none;
-    border-radius: 0 var(--borderRadius) var(--borderRadius) 0;
+    border-radius: 0 var(--main-border-radius) var(--main-border-radius) 0;
 
     &>svg {
       width: 28px;

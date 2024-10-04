@@ -25,7 +25,7 @@
   top: calc(50% - 14px);
   padding: 10px;
   border-radius: 7px;
-  background-color: var(--dark);
+  background-color: var(--dark-grey-bg-color);
   border: 1px solid #e3e3e3;
 
   img {
