@@ -119,6 +119,7 @@ export function FormSettings ({ closeDownloadModal, isModalOpened }: FormSetting
             <button
               type='button'
               title='Cancel'
+              className='btn-unpainted'
               aria-label='close-modal'
               onClick={closeDownloadModal}
             >

@@ -29,7 +29,7 @@ export function UploadImage () {
         onDragOver={handleOnDragOver}
         onDragLeave={handleOnDragLeave}
         style={{
-          color: isOnDragOver ? '#505756' : 'var(--textMain)',
+          color: isOnDragOver ? '#505756' : 'var(--main-text-color)',
           transform: isOnDragOver ? 'scale(1.1)' : ''
         }}
       >

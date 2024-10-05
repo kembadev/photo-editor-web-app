@@ -3,10 +3,14 @@ import { type Log } from '../../context/Editor/LogsProvider.tsx'
 
 import { IMAGE_DATA_ACTION_TYPES } from '../../reducer-like/ImageData.ts'
 
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useUICanvas } from '../Canvas/useUICanvas.ts'
 import { useOffscreenCanvas } from '../Canvas/useOffscreenCanvas.ts'
 import { useLogs } from '../../common/hooks/useLogs.ts'
+import { useProcessesChecker } from '../../common/hooks/useProcessesChecker.ts'
+
+import { getImageResize } from '../../methods/getImageResize.ts'
+import { getScaledImageData } from '../../methods/getScaledImage.ts'
 
 interface UICanvasImageDataHandlerProps {
   action: ReducerAction;
@@ -20,10 +24,12 @@ interface DownloadableCanvasImageDataHandlerProps {
 }
 
 export function useImageData () {
-  const { setUICanvasImageData } = useUICanvas()
-  const { setOffscreenCanvasImageData } = useOffscreenCanvas()
+  const { setUICanvasImageData, UICanvasContainer } = useUICanvas()
+  const { setOffscreenCanvasImageData, offscreenCanvasImageData } = useOffscreenCanvas()
 
   const { addUILog, restoreUILogs, addLog, restoreLogs } = useLogs()
+
+  const { taskRunningChecker } = useProcessesChecker()
 
   const UICanvasImageDataHandler = useCallback(async ({
     action,
@@ -59,6 +65,31 @@ export function useImageData () {
 
     return { updatedLogs }
   }, [setOffscreenCanvasImageData, addLog, restoreLogs])
+
+  useEffect(() => {
+    if (!offscreenCanvasImageData ||
+      !UICanvasContainer.current ||
+      !taskRunningChecker.isQueueClear) return
+
+    const { width: originalWidth, height: originalHeight } = offscreenCanvasImageData
+    const { offsetWidth: containerWidth, offsetHeight: containerHeight } = UICanvasContainer.current
+
+    const { scaleX, scaleY } = getImageResize({
+      originalWidth,
+      originalHeight,
+      containerWidth,
+      containerHeight
+    })
+    const scale = Math.min(scaleX, scaleY)
+
+    if (scale < 0.2 || scale > 1) return
+
+    const scaledImageData = getScaledImageData(offscreenCanvasImageData, scale)
+
+    if (!(scaledImageData instanceof ImageData)) return
+
+    setUICanvasImageData(scaledImageData)
+  }, [offscreenCanvasImageData, taskRunningChecker, setUICanvasImageData, UICanvasContainer])
 
   return { UICanvasImageDataHandler, offscreenCanvasImageDataHandler }
 }

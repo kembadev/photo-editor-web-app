@@ -317,7 +317,7 @@ export function useGrid () {
     })
 
     setIsAllowedToDoCrop(false)
-  }, [UICanvasImageData, onAspectRatioChange])
+  }, [UICanvasImageData])
 
   // re-draw overlayCanvas
 

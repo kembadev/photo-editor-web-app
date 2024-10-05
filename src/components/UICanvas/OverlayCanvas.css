@@ -58,6 +58,7 @@
   background-color: var(--btn-bg-blue);
   top: 100%;
   right: 0;
+  cursor: pointer;
 
   svg {
     width: 100%;

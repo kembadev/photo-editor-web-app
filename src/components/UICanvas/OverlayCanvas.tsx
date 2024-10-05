@@ -39,7 +39,7 @@ export function OverlayCanvas () {
     overlayCanvas.current.width = width
     overlayCanvas.current.height = height
 
-    const ctx = overlayCanvas.current.getContext('2d'/* , { willReadFrequently: true } */)!
+    const ctx = overlayCanvas.current.getContext('2d')!
     ctx.putImageData(gridCanvasImageData, 0, 0)
   }, [gridCanvasImageData])
 
@@ -94,7 +94,13 @@ export function OverlayCanvas () {
             ))
           }
         </div>
-        <canvas ref={overlayCanvas} />
+        <canvas
+          ref={overlayCanvas}
+          style={{
+            width: '100%',
+            height: '100%'
+          }}
+        />
       </section>
       {
         isAllowedToDoCrop && (

@@ -58,36 +58,15 @@ export function ControlPanel ({ currentToolSelected }: ControlPanelProps) {
         <article className="restore-actions">
           <button
             title="Undo"
+            className={isPrevLogAvailable ? 'btn-painted btn-clickable' : 'btn-unpainted btn-unclickable'}
             onClick={undo}
-            style={
-              isPrevLogAvailable
-                ? {
-                    backgroundColor: 'var(--btn-bg-yellow)',
-                    cursor: 'pointer'
-                  }
-                : {
-                    backgroundColor: 'transparent',
-                    color: 'var(--main-text-color)',
-                    cursor: 'auto'
-                  }}
           >
             <UndoIcon />
           </button>
           <button
             title="Redo"
+            className={isPostLogAvailable ? 'btn-painted btn-clickable' : 'btn-unpainted btn-unclickable'}
             onClick={redo}
-            style={
-              isPostLogAvailable
-                ? {
-                    backgroundColor: 'var(--btn-bg-yellow)',
-                    cursor: 'pointer'
-                  }
-                : {
-                    backgroundColor: 'transparent',
-                    color: 'var(--main-text-color)',
-                    cursor: 'auto'
-                  }
-              }
           >
             <RedoIcon />
           </button>

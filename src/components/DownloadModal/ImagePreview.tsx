@@ -1,6 +1,6 @@
 import './ImagePreview.css'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useOffscreenCanvas } from '../../hooks/Canvas/useOffscreenCanvas.ts'
 
 interface ImagePreviewProps {
@@ -12,10 +12,21 @@ export function ImagePreview ({ isModalOpened }: ImagePreviewProps) {
 
   const { offscreenCanvas, offscreenCanvasImageData } = useOffscreenCanvas()
 
+  const didImageDataChange = useRef(false)
+
+  useLayoutEffect(() => {
+    if (!offscreenCanvasImageData) return
+
+    didImageDataChange.current = true
+  }, [offscreenCanvasImageData])
+
   useEffect(() => {
     if (!offscreenCanvasImageData ||
+      !didImageDataChange.current ||
       !offscreenCanvas.current ||
       !isModalOpened) return
+
+    didImageDataChange.current = false
 
     offscreenCanvas.current.convertToBlob({ type: 'image/webp', quality: 0.65 })
       .then(blob => {

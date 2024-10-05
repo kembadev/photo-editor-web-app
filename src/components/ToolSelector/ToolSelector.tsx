@@ -24,7 +24,7 @@ export function ToolSelector ({ currentToolSelected, toggleTool }: ToolSelectorP
 
   return (
     <aside className='editor__tool-selector'>
-      <button className='tool-selector--display-btn' title='Open tool selector'>
+      <button className='tool-selector--display-btn btn-unpainted' title='Open tool selector'>
         <label>
           <BarsArrowDown />
           <input type='checkbox' defaultChecked hidden />
@@ -35,17 +35,7 @@ export function ToolSelector ({ currentToolSelected, toggleTool }: ToolSelectorP
           tools.map(({ tool, name }) => (
             <li key={tool} className='tool-selector__list--tool'>
               <button
-                style={
-                  tool === currentToolSelected
-                    ? {
-                        backgroundColor: 'var(--btn-bg-yellow)',
-                        color: 'var(--btn-bg-yellow-text-color)'
-                      }
-                    : {
-                        backgroundColor: 'transparent',
-                        color: 'var(--main-text-color)'
-                      }
-                  }
+                className={tool === currentToolSelected ? 'btn-painted' : 'btn-unpainted'}
                 onClick={() => onToggleTool(tool)}
               >
                 {name}

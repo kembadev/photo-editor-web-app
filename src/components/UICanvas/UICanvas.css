@@ -61,27 +61,38 @@
   border-radius: 2px;
   position: relative;
 
+  button {
+    border: none;
+    border-radius: 0;
+  }
+
   div {
-    width: 35px;
     display: grid;
-    place-content: center;
+    grid-template-columns: 1fr 1fr;
+
+    button {
+      width: 35px;
+      position: relative;
+    }
+
+
+    button+button::before {
+      content: "";
+      height: 100%;
+      width: 2px;
+      background-color: var(--main-bg-color);
+      position: absolute;
+      left: -1px;
+    }
   }
 
-  div+div::before {
-    content: "";
-    height: 100%;
-    width: 2px;
-    background-color: var(--main-bg-color);
-    position: absolute;
-  }
-
-  svg {
-    width: 100%;
+  button:has(span) {
+    width: 55px;
   }
 
   span {
     user-select: none;
-    margin-left: 5px;
+    font-size: 0.8rem;
   }
 }
 

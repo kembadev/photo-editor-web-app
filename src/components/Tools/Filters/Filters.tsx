@@ -14,8 +14,7 @@ const filters: { filter: FILTERS; name: string }[] = [
   { filter: FILTERS.EDGE, name: 'Edge' },
   { filter: FILTERS.EMBOSS, name: 'Emboss' },
   { filter: FILTERS.POSTERIZE, name: 'Posterize' },
-  { filter: FILTERS.SHARPEN, name: 'Sharpen' },
-  { filter: FILTERS.STACK_BLUR, name: 'Blur' }
+  { filter: FILTERS.SHARPEN, name: 'Sharpen' }
 ]
 
 export function Filters () {

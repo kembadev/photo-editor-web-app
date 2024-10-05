@@ -141,8 +141,10 @@
   button {
     display: grid;
     place-content: center;
+    color: var(--main-text-color);
     padding: 5px;
     font-size: 1.1rem;
+    cursor: pointer;
   }
 }
 
@@ -157,7 +159,6 @@
   }
 
   button:last-child {
-    background-color: transparent;
     border: var(--download-modal-border);
     border-left: none;
     border-radius: 0 var(--main-border-radius) var(--main-border-radius) 0;

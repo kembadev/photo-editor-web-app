@@ -42,7 +42,7 @@ export function Crop () {
   }, [])
 
   return (
-    <div className='crop-features'>
+    <div className='crop-features btn-painted btn-clickable'>
       <section className='crop-features__aspect-ratio'>
         <label htmlFor={checkboxInput} title='Select aspect ratio'>
           <button>

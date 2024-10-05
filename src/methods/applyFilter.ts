@@ -12,8 +12,7 @@ const APPLY_FILTER_BY_FILTER_TYPE: ApplyFilterByFilterType = {
   [FILTERS.EMBOSS]: (imageData) => Filters.emboss(imageData),
   [FILTERS.EDGE]: (imageData) => Filters.edge(imageData),
   [FILTERS.POSTERIZE]: (imageData) => Filters.posterize(imageData, 4),
-  [FILTERS.SHARPEN]: (ImageData) => Filters.sharpen(ImageData, 3),
-  [FILTERS.STACK_BLUR]: (imageData) => Filters.stackBlur(imageData, 3)
+  [FILTERS.SHARPEN]: (ImageData) => Filters.sharpen(ImageData, 3)
 }
 
 interface ApplyFilterProps {

@@ -103,7 +103,7 @@ export function UICanvas ({ currentToolSelected }: CanvasProps) {
           <div className='non-destructive-actions'>
             <button
               title='Toggle transparent background'
-              className='transparent-background--btn-controller'
+              className='transparent-background--btn-controller btn-unpainted btn-clickable'
               onClick={() => {
                 setIsBannerVisible(!isBannerVisible)
               }}
@@ -128,48 +128,42 @@ export function UICanvas ({ currentToolSelected }: CanvasProps) {
                 pointerEvents: currentToolSelected === AVAILABLE_TOOLS.CROP ? 'none' : 'auto'
               }}
             >
-              <div
-                title='Zoom In'
-                onClick={() => zoomIn()}
-                style={
-                  zoom.level >= ZOOM_LIMITS.MAX || currentToolSelected === AVAILABLE_TOOLS.CROP
-                    ? {
-                        backgroundColor: 'transparent',
-                        cursor: 'auto'
-                      }
-                    : {
-                        backgroundColor: 'var(--btn-bg-yellow)',
-                        color: 'var(--btn-bg-yellow-text-color)',
-                        cursor: 'pointer'
-                      }
-                }
-              >
-                <PlusIcon />
+              <div>
+                <button
+                  title='Zoom In'
+                  className={
+                    zoom.level >= ZOOM_LIMITS.MAX || currentToolSelected === AVAILABLE_TOOLS.CROP
+                      ? 'btn-unpainted'
+                      : 'btn-painted btn-clickable'
+                  }
+                  onClick={() => zoomIn()}
+                >
+                  <PlusIcon />
+                </button>
+                <button
+                  title='Zoom Out'
+                  className={
+                    zoom.level <= ZOOM_LIMITS.MIN || currentToolSelected === AVAILABLE_TOOLS.CROP
+                      ? 'btn-unpainted'
+                      : 'btn-painted btn-clickable'
+                  }
+                  onClick={() => zoomOut()}
+                >
+                  <MinusIcon />
+                </button>
               </div>
-              <div
-                title='Zoom Out'
-                onClick={() => zoomOut()}
-                style={
-                  zoom.level <= ZOOM_LIMITS.MIN || currentToolSelected === AVAILABLE_TOOLS.CROP
-                    ? {
-                        backgroundColor: 'transparent',
-                        cursor: 'auto'
-                      }
-                    : {
-                        backgroundColor: 'var(--btn-bg-yellow)',
-                        color: 'var(--btn-bg-yellow-text-color)',
-                        cursor: 'pointer'
-                      }
-                }
+              <button
+                title='Reset zoom'
+                className='btn-unpainted btn-clickable'
+                onClick={restoreZoom}
               >
-                <MinusIcon />
-              </div>
-              <span>{Math.floor(zoom.level * 100)}%</span>
+                <span>{Math.floor(zoom.level * 100)}%</span>
+              </button>
             </section>
           </div>
           <button
             title='Discard image'
-            className='discard-image--btn'
+            className='discard-image--btn btn-unpainted'
             onClick={discardImage}
           >
             <XIcon />
@@ -178,29 +172,42 @@ export function UICanvas ({ currentToolSelected }: CanvasProps) {
         <header className='UICanvas__user-view' ref={UICanvasContainer}>
           <button
             title='Download image'
-            className='save-image--btn'
+            className='save-image--btn btn-unpainted btn-clickable'
             aria-describedby='download-modal'
             onClick={openDownloadModal}
           >
             <DownloadIcon />
           </button>
           <canvas
-            className='UICanvas'
             ref={UICanvas}
+            className='UICanvas'
+            style={
+              UICanvasImageData
+                ? {
+                    width: `${UICanvasImageData.width}px`,
+                    height: `${UICanvasImageData.height}px`
+                  }
+                : {
+                    width: 0,
+                    height: 0
+                  }
+            }
 
             onWheel={onWheelChange}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchChange}
           />
           {currentToolSelected === AVAILABLE_TOOLS.CROP && <OverlayCanvas />}
-          <div
-            className='transparent-background'
-            style={{
-              display: isBannerVisible ? 'block' : 'none',
-              width: UICanvasImageData ? UICanvasImageData.width : 0,
-              height: UICanvasImageData ? UICanvasImageData.height : 0
-            }}
-          />
+          {
+            (isBannerVisible && UICanvasImageData) &&
+              <div
+                className='transparent-background'
+                style={{
+                  width: UICanvasImageData.width,
+                  height: UICanvasImageData.height
+                }}
+              />
+          }
           <Suspense>
             {IS_DEVELOPMENT && <LazyOffscreenCanvasDev />}
           </Suspense>
